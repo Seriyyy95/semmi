@@ -84,6 +84,21 @@ class ClickHouse
         return $data;
     }
 
+    public function getChangesData($field, $firstPeriod, $secondPeriod){
+        $query = "SELECT url, sumIf($field, date > '{$firstPeriod["startDate"]}' and date < '{$firstPeriod["endDate"]}') as data, sumIf($field, date > '{$secondPeriod["startDate"]}' and date < '{$secondPeriod["endDate"]}') as previous_data, minus(data, previous_data) as result FROM {$this->database}.positions WHERE user_id={$this->user_id} AND site_id={$this->site_id} GROUP BY url ORDER BY data DESC";
+        $result = $this->db->select($query);
+        $data = $result->rows();
+        return $data;
+    }
+
+    public function getKeywordsChangesData($url, $firstPeriod, $secondPeriod, $field){
+        $query = "SELECT keyword, sumIf($field, date > '{$firstPeriod["startDate"]}' and date < '{$firstPeriod["endDate"]}') as data, sumIf($field, date > '{$secondPeriod["startDate"]}' and date < '{$secondPeriod["endDate"]}') as previous_data, minus(data, previous_data) as result FROM {$this->database}.positions WHERE user_id={$this->user_id} AND site_id={$this->site_id} AND url='$url' GROUP BY keyword ORDER BY data DESC";
+        $result = $this->db->select($query);
+        $data = $result->rows();
+        return $data;
+    }
+
+
     public function delete(){
     $this->db->write("ALTER TABLE {$this->database}.positions DELETE WHERE site_id={$this->site_id}");
     }

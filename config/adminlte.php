@@ -231,28 +231,39 @@ return [
     */
 
     'menu' => [
-        ['header' => 'Действия'],
+        ['header' => 'История'],
         [
             'text' => 'История позиций',
             'url'  => '/stats/positions',
-            'icon' => 'fas fa-fw fa-user',
+            'icon' => 'fas fa-fw fa-poll',
         ],
         [
             'text' => 'История показов',
             'url'  => '/stats/impressions',
-            'icon' => 'fas fa-fw fa-user',
+            'icon' => 'fas fa-fw fa-plus-square',
         ],
         [
             'text' => 'История кликов',
             'url'  => '/stats/clicks',
-            'icon' => 'fas fa-fw fa-user',
+            'icon' => 'fas fa-fw fa-mouse',
         ],
         [
             'text' => 'История CTR',
             'url'  => '/stats/ctr',
-            'icon' => 'fas fa-fw fa-user',
+            'icon' => 'fas fa-fw fa-crosshairs',
         ],
 
+        ['header' => 'Изменения'],
+        [
+            'text' => 'Показы',
+            'url'  => '/changes/impressions',
+            'icon' => 'fas fa-fw fa-plus-square',
+        ],
+        [
+            'text' => 'Клики',
+            'url'  => '/changes/clicks',
+            'icon' => 'fas fa-fw fa-mouse',
+        ],
         ['header' => 'Настройки'],
         [
             'text' => 'Настройка доступа',
@@ -262,7 +273,7 @@ return [
         [
             'text' => 'Загрузка данных',
             'url'  => 'gscaccounts',
-            'icon' => 'fas fa-fw fa-user',
+            'icon' => 'fas fa-fw fa-puzzle-piece',
         ],
 
 
@@ -304,6 +315,27 @@ return [
     */
 
     'plugins' => [
+        [
+            'name' => "DateRangePicker",
+            'active' => true,
+            'files' => [
+                [
+                    'type' => 'js',
+                    'asset' => false,
+                    'location' => '//cdn.jsdelivr.net/momentjs/latest/moment.min.js',
+                ],
+                [
+                    'type' => 'js',
+                    'asset' => false,
+                    'location' => '//cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js',
+                ],
+                [
+                    'type' => 'css',
+                    'asset' => false,
+                    'location' => '//cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css',
+                ],
+            ],
+        ],
         [
             'name' => 'Datatables',
             'active' => true,

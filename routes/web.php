@@ -13,20 +13,10 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/', function () {
-    return view('welcome');
-});
-
 Auth::routes();
 
-Route::get('/home', 'HomeController@index')->name('home');
-
-Auth::routes();
-
-Route::get('/home', function() {
-    return view('home');
-})->name('home')->middleware('auth');
-
+Route::get('/', 'GscAccountsController@index');
+Route::get('/home', 'GscAccountsController@index')->name('home')->middleware('auth');
 Route::get('gscsettings', "GscSettingsController@index")->name("gscsettings.index");
 Route::post('gscsettingsapply', "GscSettingsController@apply")->name("gscsettings.apply");
 
@@ -42,3 +32,7 @@ Route::get("stats/impressions", "StatsController@impressions")->name("stats.impr
 Route::get("stats/ctr", "StatsController@ctr")->name("stats.ctr");
 Route::get("stats/select", "StatsController@selectSite")->name("stats.select_site");
 Route::get("stats/get_url_positions", "StatsController@getUrlPositions")->name("stats.get_url_positions");
+
+Route::get("changes/impressions", "ChangesController@impressions")->name("changes.impressions");
+Route::get("changes/clicks", "ChangesController@clicks")->name("changes.clicks");
+Route::get("changes/keywords", "ChangesController@keywords")->name("changes.keywords");

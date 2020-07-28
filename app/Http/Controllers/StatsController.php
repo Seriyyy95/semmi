@@ -12,6 +12,10 @@ class StatsController extends Controller
 {
 
     public function impressions(Request $request){
+        $request->validate([
+            'interval' => 'integer',
+        ]);
+
         $user = Auth::user();
         $site_id = $request->session()->get("site_id", 1);
         $interval = $request->get("inverval", 30);
@@ -38,6 +42,9 @@ class StatsController extends Controller
     }
 
     public function clicks(Request $request){
+        $request->validate([
+            'interval' => 'integer',
+        ]);
         $user = Auth::user();
         $site_id = $request->session()->get("site_id", 1);
         $interval = $request->get("inverval", 30);
@@ -64,6 +71,9 @@ class StatsController extends Controller
     }
 
     public function ctr(Request $request){
+        $request->validate([
+            'interval' => 'integer',
+        ]);
         $user = Auth::user();
         $site_id = $request->session()->get("site_id", 1);
         $interval = $request->get("inverval", 30);
@@ -90,6 +100,9 @@ class StatsController extends Controller
     }
 
     public function positions(Request $request){
+        $request->validate([
+            'interval' => 'integer',
+        ]);
         $user = Auth::user();
         $site_id = $request->session()->get("site_id", 1);
         $interval = $request->get("interval", 30);
@@ -116,6 +129,12 @@ class StatsController extends Controller
     }
 
     public function getUrlPositions(Request $request){
+        $request->validate([
+            'interval' => 'required|integer',
+            'url' => 'required|url',
+            'field' => 'required|in:impressions,clicks,avg_position,avg_ctr',
+            'agg_function' => 'required|in:sum,avg'
+        ]);
         $user = Auth::user();
         $site_id = $request->session()->get("site_id", 1);
         $url = $request->get("url");
