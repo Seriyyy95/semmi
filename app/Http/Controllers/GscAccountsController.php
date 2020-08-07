@@ -59,6 +59,9 @@ class GscAccountsController extends Controller
                 ->with("sites", $sites);
         } catch (GoogleNeedConfigFileException $e) {
             Session::flash("fail", "Необходимо загрузить файл настроек");
+            return view("gscaccounts.index")
+                ->with("sites", array());
+
         }
     }
 

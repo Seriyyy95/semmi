@@ -61,7 +61,7 @@ class ClickHouse
     }
 
     public function getUrls(){
-        $query = "SELECT url, SUM(impressions) as total_impressions FROM semmi_analytics.positions WHERE user_id={$this->user_id} AND site_id={$this->site_id} GROUP BY url ORDER BY total_impressions DESC";
+        $query = "SELECT url, SUM(impressions) as total_impressions FROM {$this->database}.positions WHERE user_id={$this->user_id} AND site_id={$this->site_id} GROUP BY url ORDER BY total_impressions DESC";
         $result = $this->db->select($query);
         return $result->rows();
     }
@@ -72,10 +72,10 @@ class ClickHouse
         foreach($periods as $period){
             $periodsData[] = "{$function}If($field, date > '{$period['start_date']}' and date < '{$period['end_date']}') as row_$counter";
             $counter++;
-        } 
+        }
         $periodsString = implode(", ", $periodsData);
-        $query = "SELECT url,keyword,$periodsString, count($field) as total FROM semmi_analytics.positions WHERE url='$url' GROUP BY url,keyword ORDER BY url, total DESC LIMIT 100";
-        $summaryQuery = "SELECT url,$periodsString FROM semmi_analytics.positions WHERE url='$url' GROUP BY url LIMIT 1";
+        $query = "SELECT url,keyword,$periodsString, count($field) as total FROM {$this->database}.positions WHERE url='$url' GROUP BY url,keyword ORDER BY url, total DESC LIMIT 100";
+        $summaryQuery = "SELECT url,$periodsString FROM {$this->database}.positions WHERE url='$url' GROUP BY url LIMIT 1";
         $result = $this->db->select($query);
         $summary = $this->db->select($summaryQuery)->fetchOne();
         $summary["keyword"] = "Общее";
@@ -117,7 +117,7 @@ class ClickHouse
         return $result->fetchOne()["date"];
     }
 
- 
+
     private function createDatabaseIfNotExist()
     {
         $this->db->write("CREATE DATABASE IF NOT EXISTS " . $this->database);
