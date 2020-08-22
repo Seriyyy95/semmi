@@ -43,6 +43,7 @@
 @endsection
 
 @section('js')
+@php ($isSearch = Session::has("search_url") ? true : 0)
 <script>
     Math.fmod = function (a,b) { return Number((a - (Math.floor(a / b) * b)).toPrecision(8)); };
 
@@ -50,7 +51,8 @@
     let periods = {{count($periods)}};
     let inProgress = false;
     let hasMore = true;
-    let isSearch = false;
+    let isSearch = {{$isSearch}};
+    console.log(isSearch);
 
         function makeSearch(){
             let selectData = [];
@@ -75,12 +77,12 @@
                     isSearch = true;
                     $('#data-container').empty();
                     loadNextLine.index = 0;
-                    loadNextLine(index);
+                    loadNextLine(index, true);
                 }
             });
         }
 
-        async function loadNextLine(index=null){
+        async function loadNextLine(index=null, search_query=0){
             if( typeof loadNextLine.index == 'undefined' ) {
                 loadNextLine.index = 0;
             }
@@ -91,7 +93,7 @@
             if (typeof urls[index] == 'undefined'){
                 return false;
             }
-            let response = await fetch("/stats/get_url_positions?url=" + urls[index].url+"&field={{$field}}&agg_function={{$aggFunction}}&interval={{$interval}}");
+            let response = await fetch("/stats/get_url_positions?url=" + urls[index].url+"&field={{$field}}&agg_function={{$aggFunction}}&interval={{$interval}}&is_search=" + search_query);
             let data = await response.json();
             let hide = false;
             let hash, hidden = 0;
@@ -158,7 +160,7 @@
             for (i = 0; i < string.length; i++) {
                 chr   = string.charCodeAt(i);
                 hash  = ((hash << 5) - hash) + chr;
-                hash |= 0; 
+                hash |= 0;
             }
             return hash;
         }
@@ -211,7 +213,9 @@
         }
 
         makeSearch();
-        loadNextLine();
+        if(isSearch == false){
+            loadNextLine();
+        }
         $(window).scroll(function() {
             if(($(window).scrollTop() + $(window).height() >= $(document).height() - 200) && !inProgress && hasMore == true && isSearch == false) {
                 inProgress = true;
@@ -225,4 +229,14 @@
             $(this).closest("form").submit();
         });
 </script>
+@if(Session::has('search_url'))
+    <script>
+        isSearch = true;
+        let url = "{!! Session::get('search_url')!!}";
+        index = urls.findIndex(param => param.url === url);
+        console.log(index);
+        $("#search-select").val(index).trigger('change');
+    </script>
+@endif
+
 @endsection

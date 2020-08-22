@@ -18,7 +18,7 @@ class StatsController extends Controller
 
         $user = Auth::user();
         $site_id = $request->session()->get("site_id", 1);
-        $interval = $request->get("inverval", 30);
+        $interval = $this->getInterval($request);
         $sites = GoogleGscSite::where("user_id", $user->id)->get();
         $clickHouse = ClickHouse::getInstance();
         $clickHouse->setUser($user->id);
@@ -47,7 +47,7 @@ class StatsController extends Controller
         ]);
         $user = Auth::user();
         $site_id = $request->session()->get("site_id", 1);
-        $interval = $request->get("inverval", 30);
+        $interval = $this->getInterval($request);
         $sites = GoogleGscSite::where("user_id", $user->id)->get();
         $clickHouse = ClickHouse::getInstance();
         $clickHouse->setUser($user->id);
@@ -76,7 +76,7 @@ class StatsController extends Controller
         ]);
         $user = Auth::user();
         $site_id = $request->session()->get("site_id", 1);
-        $interval = $request->get("inverval", 30);
+        $interval = $this->getInterval($request);
         $sites = GoogleGscSite::where("user_id", $user->id)->get();
         $clickHouse = ClickHouse::getInstance();
         $clickHouse->setUser($user->id);
@@ -105,7 +105,7 @@ class StatsController extends Controller
         ]);
         $user = Auth::user();
         $site_id = $request->session()->get("site_id", 1);
-        $interval = $request->get("interval", 30);
+        $interval = $this->getInterval($request);
         $sites = GoogleGscSite::where("user_id", $user->id)->get();
         $clickHouse = ClickHouse::getInstance();
         $clickHouse->setUser($user->id);
@@ -141,6 +141,12 @@ class StatsController extends Controller
         $field = $request->get("field");
         $interval = $request->get("interval");
         $aggFunc = $request->get("agg_function");
+        $isSearch = $request->get("is_search", false);
+        if($isSearch == true){
+            $request->session()->put('search_url', $url);
+        }else{
+            $request->session()->forget('search_url');
+        }
         $sites = GoogleGscSite::where("user_id", $user->id)->get();
         $clickHouse = ClickHouse::getInstance();
         $clickHouse->setUser($user->id);
@@ -158,6 +164,7 @@ class StatsController extends Controller
         if ($site == null) {
             return back()->withFail("Сайт $site_id не найден!");
         }
+        $request->session()->forget('search_url');
         $request->session()->put('site_id', $site_id);
         return back();
     }
@@ -183,4 +190,16 @@ class StatsController extends Controller
         return $periods;
     }
 
+    private function getInterval(Request $request){
+        if($request->session()->has("interval")){
+            $saved_interval = $request->session()->get("interval");
+        }else{
+            $saved_interval = 30;
+        }
+        $interval = $request->get("interval", $saved_interval);
+        if($interval != $saved_interval){
+            $request->session()->put("interval", $interval);
+        }
+        return $interval;
+    }
 }
