@@ -92,7 +92,7 @@ class ClickHouse
     }
 
     public function getKeywordsChangesData($url, $firstPeriod, $secondPeriod, $field){
-        $query = "SELECT keyword, sumIf($field, date > '{$firstPeriod["startDate"]}' and date < '{$firstPeriod["endDate"]}') as data, sumIf($field, date > '{$secondPeriod["startDate"]}' and date < '{$secondPeriod["endDate"]}') as previous_data, minus(data, previous_data) as result FROM {$this->database}.positions WHERE user_id={$this->user_id} AND site_id={$this->site_id} AND url='$url' GROUP BY keyword ORDER BY data DESC";
+        $query = "SELECT keyword, sumIf($field, date > '{$firstPeriod["startDate"]}' and date < '{$firstPeriod["endDate"]}') as data, sumIf($field, date > '{$secondPeriod["startDate"]}' and date < '{$secondPeriod["endDate"]}') as previous_data, minus(previous_data, data) as result FROM {$this->database}.positions WHERE user_id={$this->user_id} AND site_id={$this->site_id} AND url='$url' GROUP BY keyword ORDER BY data DESC";
         $result = $this->db->select($query);
         $data = $result->rows();
         return $data;
