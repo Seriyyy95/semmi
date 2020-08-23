@@ -11,6 +11,10 @@ use DateTime;
 class StatsController extends Controller
 {
 
+    public function __construct(){
+        $this->middleware("auth");
+    }
+
     public function impressions(Request $request){
         $request->validate([
             'interval' => 'integer',

@@ -10,6 +10,11 @@ use DateTime;
 
 class ChangesController extends Controller
 {
+
+    public function __construct(){
+        $this->middleware("auth");
+    }
+
     public function impressions(Request $request)
     {
         $response = $this->changes($request, "impressions");
@@ -42,7 +47,7 @@ class ChangesController extends Controller
         $clickHouse->setSite($site_id);
         $minDate = $clickHouse->getMinDate();
         $maxDate = $clickHouse->getMaxDate();
- 
+
         if ($request->has("first_period") && $request->has("second_period")) {
             list($firstPeriod, $secondPeriod) = $this->getPeriodsFromRequest($request);
         } else {
@@ -113,7 +118,7 @@ class ChangesController extends Controller
         $clickHouse->setSite($site_id);
         $minDate = $clickHouse->getMinDate();
         $maxDate = $clickHouse->getMaxDate();
- 
+
         if ($request->has("first_period") && $request->has("second_period")) {
             list($firstPeriod, $secondPeriod) = $this->getPeriodsFromRequest($request);
         } else {
