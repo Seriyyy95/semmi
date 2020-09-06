@@ -1,6 +1,8 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Auth;
+use App\User;
 
 /*
 |--------------------------------------------------------------------------
@@ -15,7 +17,17 @@ use Illuminate\Support\Facades\Route;
 
 Auth::routes();
 
-Route::get('/', 'GscAccountsController@index');
+Route::get('/', function () {
+    $usersCount = User::count();
+    if ($usersCount > 0) {
+        return redirect(route("home"));
+    } else {
+        return redirect(route("installer.index"));
+    }
+});
+
+Route::get('/install', 'InstallController@index')->name("installer.index");
+Route::post('/install', 'InstallController@install')->name("installer.install");
 Route::get('/home', 'GscAccountsController@index')->name('home')->middleware('auth');
 Route::get('gscsettings', "GscSettingsController@index")->name("gscsettings.index");
 Route::post('gscsettingsapply', "GscSettingsController@apply")->name("gscsettings.apply");

@@ -46,22 +46,21 @@ class GscAccountsController extends Controller
                     ->first();
                 if ($lastElement != null && $lastElement->date != null) {
                     $site->last_date = $lastElement->date;
-                }else{
+                } else {
                     $site->last_date = null;
                 }
                 if ($firstElement != null && $firstElement->date != null) {
                     $site->first_date = $firstElement->date;
-                }else{
+                } else {
                     $site->first_date = null;
                 }
             });
             return view("gscaccounts.index")
                 ->with("sites", $sites);
         } catch (GoogleNeedConfigFileException $e) {
-            Session::flash("fail", "Необходимо загрузить файл настроек");
+            Session::flash("fail", "Необходимо загрузить файл сервис аккаунта Google в разделе 'Настройка доступа'");
             return view("gscaccounts.index")
                 ->with("sites", array());
-
         }
     }
 

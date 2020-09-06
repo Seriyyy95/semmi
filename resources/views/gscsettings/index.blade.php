@@ -26,11 +26,12 @@
     </div>
     <div class="form-group">
         <input type="submit" value="Сохранить" class="btn btn-primary" />
+        <a href="https://semmi.ru/instruktsii/nastrojka-dostupa-k-google-dlya-semmi-analytics/" target="_blank" class="btn btn-warning">Где взять?</a>
     </div>
 </form>
 @if($hasFile)
     <p>Файл конфигурации загружен</p>
-@else 
+@else
     <p>Файл конфигурации не загружен </p>
 @endif
 @endsection

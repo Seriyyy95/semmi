@@ -46,6 +46,19 @@ services:
       - db-data:/var/lib/mysql
     networks:
       - docker-network
+  docker-phpmyadmin:
+    restart: always
+    image: phpmyadmin/phpmyadmin:latest
+    ports:
+      - "8881:80"
+    environment:
+      - PMA_HOST=docker-mariadb
+    volumes:
+      - ./docker/phpmyadmin/uploads.ini:/usr/local/etc/php/conf.d/uploads.ini
+    networks:
+      - docker-network
+    depends_on:
+      - docker-mariadb
   docker-clickhouse:
     restart: always
     image: yandex/clickhouse-server:latest

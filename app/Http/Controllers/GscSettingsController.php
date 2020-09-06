@@ -13,12 +13,13 @@ use App\GoogleAPI;
 
 class GscSettingsController extends Controller
 {
-
-    public function __construct(){
+    public function __construct()
+    {
         $this->middleware('auth');
     }
 
-    public function index(){
+    public function index()
+    {
         $user = Auth::user();
         $optionsManager = new OptionsManager();
         $optionsManager->setUser($user->id);
@@ -27,7 +28,7 @@ class GscSettingsController extends Controller
             $gloader->setMode(GoogleAPI::MODE_SERVICE);
             $gloader->setUser($user->id);
         } catch (GoogleNeedConfigFileException $e) {
-            Session::flash("fail", "Необходимо загрузить файл настроек");
+            Session::flash("fail", "Необходимо загрузить файл сервис-аккаунта Google");
         }
 
         $hasFile = $gloader->hasConfigFile();
@@ -35,13 +36,14 @@ class GscSettingsController extends Controller
             ->with("hasFile", $hasFile);
     }
 
-    public function apply(Request $request){
+    public function apply(Request $request)
+    {
         $user = Auth::user();
         $optionsManager = new OptionsManager();
         $optionsManager->setUser($user->id);
- 
+
         $request->validate([
-            'config_file'=> ['required','max:200'] 
+            'config_file'=> ['required','max:200']
         ]);
 
         try {
@@ -49,7 +51,7 @@ class GscSettingsController extends Controller
             $gloader->setUser($user->id);
             $gloader->setMode(GoogleAPI::MODE_SERVICE);
         } catch (GoogleNeedConfigFileException $e) {
-            Session::flash("fail", "Необходимо загрузить файл настроек");
+            Session::flash("fail", "Необходимо загрузить файл сервис-аккаунта Google");
         }
 
         if ($request->hasFile('config_file')) {
@@ -62,9 +64,9 @@ class GscSettingsController extends Controller
             $storagePath = Storage::disk('data')->path('');
             $request->file('config_file')->move($storagePath, $fileNameToStore);
             $gloader->setConfigFile($storagePath . $fileNameToStore);
-            Session::flash("success", "Файл настроек успешно загружен");
+            Session::flash("success", "Файл сервис-аккаунта успешно загружен");
         }
-        
+
         return back();
     }
 }
