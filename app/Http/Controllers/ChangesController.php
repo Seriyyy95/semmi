@@ -5,13 +5,13 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\GoogleGscSite;
-use App\ClickHouse;
+use App\ClickHousePositions;
 use DateTime;
 
 class ChangesController extends Controller
 {
-
-    public function __construct(){
+    public function __construct()
+    {
         $this->middleware("auth");
     }
 
@@ -42,7 +42,7 @@ class ChangesController extends Controller
         $url = $request->get("url");
         $field = $request->get("field", "impressions");
 
-        $clickHouse = ClickHouse::getInstance();
+        $clickHouse = ClickHousePositions::getInstance();
         $clickHouse->setUser($user->id);
         $clickHouse->setSite($site_id);
         $minDate = $clickHouse->getMinDate();
@@ -53,7 +53,7 @@ class ChangesController extends Controller
         } else {
             list($firstPeriod, $secondPeriod) = $this->getDefaultPeriods($minDate, $maxDate);
         }
-        if($firstPeriod === false){
+        if ($firstPeriod === false) {
             return back()->withFail("Период задан не верно или недостаточно данных для анализа");
         }
         $data = $clickHouse->getKeywordsChangesData($url, $firstPeriod, $secondPeriod, $field);
@@ -113,7 +113,7 @@ class ChangesController extends Controller
         $site_id = $request->session()->get("site_id", 1);
         $sites = GoogleGscSite::where("user_id", $user->id)->get();
 
-        $clickHouse = ClickHouse::getInstance();
+        $clickHouse = ClickHousePositions::getInstance();
         $clickHouse->setUser($user->id);
         $clickHouse->setSite($site_id);
         $minDate = $clickHouse->getMinDate();
@@ -124,7 +124,7 @@ class ChangesController extends Controller
         } else {
             list($firstPeriod, $secondPeriod) = $this->getDefaultPeriods($minDate, $maxDate);
         }
-        if($firstPeriod === false){
+        if ($firstPeriod === false) {
             return back()->withFail("Период задан не верно или недостаточно данных для анализа");
         }
         $data = $clickHouse->getChangesData($field, $firstPeriod, $secondPeriod);

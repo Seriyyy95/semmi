@@ -1,9 +1,9 @@
 @extends('adminlte::page')
 
-@section('title', 'Загрузка данных из Google Search Console')
+@section('title', 'Загрузка данных из Google Analytics')
 
 @section('content_header')
-<h1 class="m-0 text-dark">Загрузка данных из Google Search Console</h1>
+<h1 class="m-0 text-dark">Загрузка данных из Google Analytics</h1>
 @stop
 
 @section('content')
@@ -13,15 +13,17 @@
         <table class="table table-striped">
             <thead class="thead-dark">
                 <tr>
-                    <th>Адрес сайта</th>
+                    <th>Профиль</th>
+                    <th>Домен</th>
                     <th>Доступно данных</th>
                     <th>Загружено или запланировано</th>
-                    <th>Действия</th>
+                    <th style="width: 250px">Действия</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach($sites as $site)
                 <tr>
+                    <td>{{$site->profile_name}}</td>
                     <td>{{$site->domain}}</td>
                     <td>{{$site->start_date}} - {{$site->end_date}}</td>
                     <td>{{$site->first_date}} - {{$site->last_date}}</td>
@@ -39,12 +41,12 @@
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <a href="{{route('gscaccounts.stop', $site->id)}}" class="btn btn-danger">Остановить</a>
+                                <a href="{{route('gaaccounts.stop', $site->id)}}" class="btn btn-danger">Остановить</a>
                             </div>
                             @else
                             <a href="#" data-site-id="{{$site->id}}" class="btn btn-primary load-btn">Загрузить
                                 данные</a>
-                            <a href="{{route('gscaccounts.delete', $site->id)}}" class="btn btn-danger">Удалить
+                            <a href="{{route('gaaccounts.delete', $site->id)}}" class="btn btn-danger">Удалить
                                 данные</a>
                             @endif
                     </td>
@@ -56,22 +58,21 @@
 </div>
 @endsection
 
-@section('js')
-<script>
-    async function updateParsent(){
-        $('.gsc-site-progress').each(await async function(index, element){
-            let site_id =  $(element).data('site-id');
-            let response = await fetch('/gscaccounts/' + site_id + '/status');
-            let data = await response.json();
-            //console.log(data);
-            $(element).css({width: data.parsent + '%'});
-            $(element).text(data.parsent + '%');
-            setTimeout(updateParsent, 1000);
-        });
-    }
-    updateParsent();
-</script>
-<script>
+@section("js")
+    <script>
+        async function updateParsent(){
+            $('.gsc-site-progress').each(await async function(index, element){
+                let site_id =  $(element).data('site-id');
+                let response = await fetch('/gaaccounts/' + site_id + '/status');
+                let data = await response.json();
+                //console.log(data);
+                $(element).css({width: data.parsent + '%'});
+                $(element).text(data.parsent + '%');
+                setTimeout(updateParsent, 1000);
+            });
+        }
+        updateParsent();
+
         async function loadNextDates(site_id){
             console.log("Load next chunk");
             if(loadNextDates.taskId === "undefined"){
@@ -80,7 +81,7 @@
             if(loadNextDates.count === "undefined"){
                 loadNextDates.count = 0;
             }
-            let response = await fetch("/gscaccounts/"+site_id+"/load?last_task_id="+loadNextDates.taskId);
+            let response = await fetch("/gaaccounts/"+site_id+"/load?last_task_id="+loadNextDates.taskId);
             let data = await response.json();
             console.log(data)
             loadNextDates.count += data["count"]
@@ -108,5 +109,6 @@
                 }
             }, 200);
         });
-</script>
+    </script>
+
 @endsection

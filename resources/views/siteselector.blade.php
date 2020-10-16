@@ -9,7 +9,7 @@
         @endforeach
     </select>
     <script>
-        document.addEventListener('load', function(){
+        document.addEventListener('DOMContentLoaded', function(){
             $('#site_id').change(function(){
                 $(this).closest("form").submit();
             });

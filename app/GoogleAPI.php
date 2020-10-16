@@ -22,9 +22,9 @@ class GoogleAPI
         $this->client = new \Google_Client();
         $this->client->setApplicationName($name);
         $this->client->setAuthConfig($config);
-        if($mode == GoogleAPI::MODE_QAUTH){
-          $this->client->setAccessType("offline");
-          $this->client->setApprovalPrompt ("force");
+        if ($mode == GoogleAPI::MODE_QAUTH) {
+            $this->client->setAccessType("offline");
+            $this->client->setApprovalPrompt("force");
         }
         $this->client->setIncludeGrantedScopes(true);
         $this->client->addScope('https://www.googleapis.com/auth/webmasters');
@@ -157,42 +157,17 @@ class GoogleAPI
         $organic = new \Google_Service_AnalyticsReporting_Metric();
         $organic->setExpression("ga:organicSearches");
         $organic->setAlias("organicSearches");
-        $bounce = new \Google_Service_AnalyticsReporting_Metric();
-        $bounce->setExpression("ga:bounceRate");
-        $bounce->setAlias("bounceRate");
-        $entrances = new \Google_Service_AnalyticsReporting_Metric();
-        $entrances->setExpression("ga:entrances");
-        $entrances->setAlias("entrances");
         $pageviews = new \Google_Service_AnalyticsReporting_Metric();
         $pageviews->setExpression("ga:pageviews");
         $pageviews->setAlias("pageviews");
-        $exits = new \Google_Service_AnalyticsReporting_Metric();
-        $exits->setExpression("ga:exits");
-        $exits->setAlias("exits");
-        $uniquePageviews = new \Google_Service_AnalyticsReporting_Metric();
-        $uniquePageviews->setExpression("ga:uniquePageviews");
-        $uniquePageviews->setAlias("uniquePageviews");
-        $timeOnPage = new \Google_Service_AnalyticsReporting_Metric();
-        $timeOnPage->setExpression("ga:timeOnPage");
-        $timeOnPage->setAlias("timeOnPage");
         $adsenseRevenue = new \Google_Service_AnalyticsReporting_Metric();
         $adsenseRevenue->setExpression("ga:adsenseRevenue");
         $adsenseRevenue->setAlias("adsenseRevenue");
-        $adsenseAdsViewed = new \Google_Service_AnalyticsReporting_Metric();
-        $adsenseAdsViewed->setExpression("ga:adsenseAdsViewed");
-        $adsenseAdsViewed->setAlias("adsenseAdsViewed");
-        $adsenseAdsClicks = new \Google_Service_AnalyticsReporting_Metric();
-        $adsenseAdsClicks->setExpression("ga:adsenseAdsClicks");
-        $adsenseAdsClicks->setAlias("adsenseAdsClicks");
-
         $pageDimension = new \Google_Service_AnalyticsReporting_Dimension();
         $pageDimension->setName("ga:pagePath");
 
         $dateDimension = new \Google_Service_AnalyticsReporting_Dimension();
         $dateDimension->setName("ga:date");
-
-        $sourceDimension = new \Google_Service_AnalyticsReporting_Dimension();
-        $sourceDimension->setName("ga:source");
 
         $titleDimension = new \Google_Service_AnalyticsReporting_Dimension();
         $titleDimension->setName("ga:pageTitle");
@@ -201,7 +176,7 @@ class GoogleAPI
         $request->setViewId("ga:" . $view);
         $request->setPageSize(10000);
         $request->setDateRanges($dateRange);
-        $request->setMetrics(array($organic, $bounce, $entrances, $pageviews, $exits, $uniquePageviews, $timeOnPage, $adsenseRevenue, $adsenseAdsViewed, $adsenseAdsClicks));
+        $request->setMetrics(array($organic, $pageviews, $adsenseRevenue));
         $request->setDimensions(array($dateDimension, $pageDimension));
 
         $body = new \Google_Service_AnalyticsReporting_GetReportsRequest();
@@ -210,6 +185,7 @@ class GoogleAPI
         $resultData = array();
 
         do {
+            $startTime = time();
             $reports = $this->analyticsReporting->reports->batchGet($body);
 
             foreach ($reports as $report) {
@@ -234,9 +210,14 @@ class GoogleAPI
                             } elseif (strpos($url, " ")) {
                                 $url = substr($url, 0, strpos($url, " "));
                             }
-                            $url = clear_url($url);
-                            if (strlen($url) < 120) {
-                                $resultArray[$dimensionName] = $url;
+                            $scheme = parse_url($url);
+                            $url = $scheme["scheme"] . "://" . $scheme["host"] . $scheme["path"];
+                            $url = rtrim($url, "/");
+                            $url = rtrim($url, "amp/");
+                            $url = rtrim($url, "amp");
+
+                            if (strlen($url) < 255) {
+                                $resultArray["url"] = $url;
                             }
                         } else {
                             $resultArray[$dimensionName] = $dimensions[$i];
@@ -252,13 +233,17 @@ class GoogleAPI
                                 $resultArray[$metricHeaders[$i]->name] = $metrics[$i];
                             }
                             $resultArray["domain"] = $site;
-                            $resultArray["profile"] = $view;
                         }
                     }
                     $resultData[] = $resultArray;
                 }
             }
             $request->setPageToken($reports[0]->getNextPageToken());
+            $endTime = time();
+            $duration = $endTime - $startTime;
+            if ($duration < 2) {
+                sleep(2);
+            }
         } while ($reports[0]->getNextPageToken() != '');
         return $resultData;
     }

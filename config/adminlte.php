@@ -252,6 +252,20 @@ return [
             'url'  => '/stats/ctr',
             'icon' => 'fas fa-fw fa-crosshairs',
         ],
+        ['header' => 'Календарь'],
+        [
+            'text' => 'Все просмотры',
+            'url'  => '/stats/pageviews',
+            'icon' => 'fas fa-fw fa-eye',
+        ],
+        [
+            'text' => 'Доход',
+            'url'  => '/stats/revenue',
+            'icon' => 'fas fa-fw fa-dollar-sign',
+        ],
+
+
+
 
         ['header' => 'Изменения'],
         [
@@ -271,11 +285,15 @@ return [
             'icon' => 'fas fa-fw fa-user',
         ],
         [
-            'text' => 'Загрузка данных',
+            'text' => 'Загрузка Search Console',
             'url'  => 'gscaccounts',
             'icon' => 'fas fa-fw fa-puzzle-piece',
         ],
-
+        [
+            'text' => 'Загрузка Analytics',
+            'url'  => 'gaaccounts',
+            'icon' => 'fas fa-fw fa-puzzle-piece',
+        ],
 
     ],
 

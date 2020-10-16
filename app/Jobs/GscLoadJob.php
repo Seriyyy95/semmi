@@ -11,7 +11,7 @@ use App\GscTask;
 use App\GoogleGscSite;
 use App\OptionsManager;
 use App\GoogleDataLoader;
-use App\ClickHouse;
+use App\ClickHousePositions;
 
 class GscLoadJob implements ShouldQueue
 {
@@ -39,7 +39,6 @@ class GscLoadJob implements ShouldQueue
     public function handle()
     {
         if ($this->gscTask->status != "disabled") {
-
             $date = $this->gscTask->date;
             $user_id = $this->gscTask->user_id;
             $site_id = $this->gscTask->site_id;
@@ -51,10 +50,10 @@ class GscLoadJob implements ShouldQueue
             $gloader = new GoogleDataLoader($optionsManager);
             $gloader->setUser($user_id);
 
-            $clickHouse = ClickHouse::getInstance();
+            $clickHouse = ClickHousePositions::getInstance();
             $clickHouse->setUser($user_id);
             $clickHouse->setSite($site_id);
-            
+
             $gscSite = GoogleGscSite::findOrFail($this->gscTask->site_id);
 
             do {
@@ -94,13 +93,13 @@ class GscLoadJob implements ShouldQueue
             ->where("status", "!=", "disabled")
             ->where("id", ">", $gscSite->last_task_id)
             ->count();
-            \Log::info("active: $active");
+        \Log::info("active: $active");
         $max = GscTask::selectRaw("MAX(id) as id")
             ->where("user_id", $gscSite->user_id)
             ->where("site_id", $gscSite->id)
             ->first()->id;
         $total = $max - $gscSite->last_task_id;
-            \Log::info("total: $total");
+        \Log::info("total: $total");
         $gscSite->parsent = $active * 100 / $total;
         $gscSite->save();
     }

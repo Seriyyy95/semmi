@@ -5,17 +5,16 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Session;
-use Storage;
 use App\OptionsManager;
 use App\GoogleDataLoader;
 use App\GoogleNeedConfigFileException;
 use App\GoogleAPI;
-use App\ClickHousePositions;
-use App\GoogleGscSite;
-use App\GscTask;
-use App\Jobs\GscLoadJob;
+use App\ClickHouseViews;
+use App\GoogleAnalyticsSite;
+use App\GATask;
+use App\Jobs\GaLoadJob;
 
-class GscAccountsController extends Controller
+class GaAccountsController extends Controller
 {
     public function __construct()
     {
@@ -32,14 +31,14 @@ class GscAccountsController extends Controller
             $gloader = new GoogleDataLoader($optionsManager);
             $gloader->setMode(GoogleAPI::MODE_SERVICE);
             $gloader->setUser($user->id);
-            $sites = $gloader->listGSCSites(function ($site) {
-                $lastElement = GscTask::selectRaw("MAX(date) as date")
+            $sites = $gloader->listAnalyticsSites(function ($site) {
+                $lastElement = GATask::selectRaw("MAX(date) as date")
                     ->where("user_id", $site->user_id)
                     ->where("site_id", $site->id)
                     ->where("status", "!=", "disabled")
                     ->limit(1)
                     ->first();
-                $firstElement = GscTask::selectRaw("MIN(date) as date")
+                $firstElement = GATask::selectRaw("MIN(date) as date")
                     ->where("user_id", $site->user_id)
                     ->where("site_id", $site->id)
                     ->where("status", "!=", "disabled")
@@ -56,21 +55,21 @@ class GscAccountsController extends Controller
                     $site->first_date = null;
                 }
             });
-            return view("gscaccounts.index")
+            return view("gaaccounts.index")
                 ->with("sites", $sites);
         } catch (GoogleNeedConfigFileException $e) {
             Session::flash("fail", "Необходимо загрузить файл сервис аккаунта Google в разделе 'Настройка доступа'");
-            return view("gscaccounts.index")
+            return view("gaaccounts.index")
                 ->with("sites", array());
         }
     }
 
     public function load(Request $request, $id)
     {
-        $site = GoogleGscSite::findOrFail($id);
+        $site = GoogleAnalyticsSite::findOrFail($id);
         $user = Auth::user();
 
-        $lastElement = GscTask::selectRaw("MAX(date) as date")
+        $lastElement = GATask::selectRaw("MAX(date) as date")
             ->where("user_id", $user->id)
             ->where("site_id", $site->id)
             ->where("status", "!=", "disabled")
@@ -91,7 +90,7 @@ class GscAccountsController extends Controller
         if (count($dates) > 0) {
             foreach ($dates as $date) {
                 $count++;
-                $gscTask = new GscTask();
+                $gscTask = new GATask();
                 $gscTask->date = $date;
                 $gscTask->user_id = $user->id;
                 $gscTask->site_id = $id;
@@ -99,9 +98,9 @@ class GscAccountsController extends Controller
                 if ($lastTaskId == null) {
                     $lastTaskId = $gscTask->id;
                 }
-                GscLoadJob::dispatch($gscTask)
+                GaLoadJob::dispatch($gscTask)
                     ->onConnection('database')
-                    ->onQueue("gsc_data");
+                    ->onQueue("ga_data");
             }
             $site->last_task_id = $lastTaskId;
             $site->parsent = 0;
@@ -115,7 +114,7 @@ class GscAccountsController extends Controller
 
     public function status($id)
     {
-        $site = GoogleGscSite::findOrFail($id);
+        $site = GoogleAnalyticsSite::findOrFail($id);
         $result = array(
             "parsent" => $site->parsent,
             "site_id" => $id
@@ -125,13 +124,13 @@ class GscAccountsController extends Controller
 
     public function delete($id)
     {
-        $site = GoogleGscSite::findOrFail($id);
+        $site = GoogleAnalyticsSite::findOrFail($id);
         $user = Auth::user();
-        $clickHouse = ClickHousePositions::getInstance();
+        $clickHouse = ClickHouseViews::getInstance();
         $clickHouse->setUser($user->id);
         $clickHouse->setSite($id);
         $clickHouse->delete();
-        GscTask::where("site_id", $id)
+        GATask::where("site_id", $id)
             ->where("user_id", $user->id)
             ->update(array("status" => "disabled"));
         return back()->withSuccess("Данные сайта полностью удалены!");
@@ -139,11 +138,11 @@ class GscAccountsController extends Controller
 
     public function stop($id)
     {
-        $site = GoogleGscSite::findOrFail($id);
+        $site = GoogleAnalyticsSite::findOrFail($id);
         $user = Auth::user();
         $last_task_id = $site->last_task_id;
 
-        GscTask::where("user_id", $user->id)
+        GATask::where("user_id", $user->id)
             ->where("site_id", $id)
             ->where("id", ">=", $last_task_id)
             ->where("status", "active")

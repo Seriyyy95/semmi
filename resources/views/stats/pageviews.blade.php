@@ -7,17 +7,7 @@
     <div class="col-md-3">
         <h1 class="m-0 text-dark">{{$title}}</h1>
     </div>
-    <div class="col-md-3">
-        <form method="GET" id="interval-form">
-            <select class="form-control" id="interval-select" name="interval">
-                <option value="7" @if($interval == 7) selected="selected" @endif>Неделя</option>
-                <option value="30" @if($interval == 30) selected="selected" @endif>Месяц</option>
-                <option value="90" @if($interval == 90) selected="selected" @endif>Квартал</option>
-                <option value="180" @if($interval == 180) selected="selected" @endif>Пол года</option>
-            </select>
-        </form>
-    </div>
-    <div class="col-md-3">
+    <div class="col-md-6">
         <select class="form-control" id="search-select">
             <option value="-1" selected="selected">Все данные</option>
         </select>
@@ -29,16 +19,13 @@
 @endsection
 @section('content')
 @include('notifications')
-<div class="form-check">
-<input type="checkbox" class="form-check-input" id="keywords-button" />
-<label>Отображать ключевые слова</label>
-</div>
 <table class="table table-striped">
     <thead class="thead-dark">
         <th>Ссылка</th>
-        <th id="keywords-title">Ключ</th>
-        @foreach($periods as $period)
-        <th>{{ $period["start_date"]}} - {{$period["end_date"]}}</th>
+        <th>Год</th>
+        @php ($months = array("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12")) @endphp
+        @foreach($months as $month)
+        <th>{{$month}}</th>
         @endforeach
     </thead>
     <tbody id="data-container">
@@ -51,37 +38,13 @@
 <script>
     Math.fmod = function (a,b) { return Number((a - (Math.floor(a / b) * b)).toPrecision(8)); };
 
-    let showKeywords = parseInt(localStorage.getItem("showKeywords"));
-
-    document.addEventListener("DOMContentLoaded", function(){
-        let keywordsButton = $("#keywords-button");
-        let keywordsTitle = $("#keywords-title");
-
-        if(showKeywords == 1){
-            keywordsTitle.text("Ключ");
-            keywordsButton.prop("checked", true);
-        }else{
-            keywordsButton.prop("checked", false);
-            keywordsTitle.text("");
-        }
-        $("#keywords-button").change(function(){
-            let checked = $("#keywords-button").is(':checked');
-            if(checked == true){
-                localStorage.setItem("showKeywords", 1);
-            }else{
-                localStorage.setItem("showKeywords", 0);
-            }
-            location.reload();
-        });
-    },true);
-
     let urls = {!! json_encode($urls) !!};
+    let periodsMetadata = {!! json_encode($periodsMetadata) !!};
     let periods = {{count($periods)}};
     let inProgress = false;
     let hasMore = true;
     let isSearch = {{$isSearch}};
     let callback = '{{$callback}}';
-    console.log(isSearch);
 
         function makeSearch(){
             let selectData = [];
@@ -93,7 +56,6 @@
             });
             $("#search-select").select2({
                 data: selectData,
-                width: '200px'
             });
             $("#search-select").change(function(){
                 let index = $(this).children("option:selected").val();
@@ -122,85 +84,58 @@
             if (typeof urls[index] == 'undefined'){
                 return false;
             }
-            let response = await fetch(callback + "?url=" + urls[index].url+"&field={{$field}}&agg_function={{$aggFunction}}&interval={{$interval}}&is_search=" + search_query);
+            let response = await fetch(callback + "?url=" + urls[index].url+"&field={{$field}}&agg_function={{$aggFunction}}&is_search=" + search_query);
             let data = await response.json();
-            let hide = false;
-            let hash, hidden = 0;
+
             data.forEach(function(element, index){
-                hash = getHash(element.url);
-                if(index == 10){
-                    hide = true;
+                let startYear = periodsMetadata["firstYear"];
+                let endYear = periodsMetadata["lastYear"];
+                let titleSpan = endYear - startYear+2;
+                let rowsCount = 0;
+                let total = element.total;
+                if(Math.fmod(total, 1) > 0){
+                    total = total.toFixed(2);
                 }
-                if(index > 10){
-                    hidden++;
-                }
-                if(element.keyword == "Общее" || showKeywords == 1){
-                    if(element.keyword !== "(not set)" && element.keyword !== "(not provided)"){
-                        let tr = $('<tr></tr>');
-                        tr.append($('<td></td>').text(element.url));
-                        if(showKeywords == 1){
-                            tr.append($('<td></td>').text(element.keyword));
-                        }else{
-                            tr.append($('<td></td>'));
-                        }
-                        for(array_index = 0; array_index < periods; array_index++){
-                            let value = element['row_' + array_index];
-                            if(Math.fmod(value, 1) > 0){
-                                value = value.toFixed(2);
-                            }
-                            if(value != null){
-                                tr.append($('<td></td>').text(value).css("background-color", getColor(value, {{$minValue}},{{$maxValue}},{{$invertColor}})));
-                            }else{
-                                tr.append($('<td></td>').text("-"));
-                            }
-                        }
 
-                        if(index == 0 && showKeywords == 1){
-                            tr.css('font-weight', 'bold');
-                        }
-                        if(hide == true){
-                            tr.css("display", "none");
-                            tr.attr("data-id", hash);
-                        }
-                        $('#data-container').append(tr);
+                do{
+                    let tr = $('<tr></tr>');
+                    if(rowsCount == 0){
+                        tr.append($('<td></td>').text(element.url).attr("rowspan", titleSpan));
                     }
-                }
-            });
-            if(hide == true && showKeywords == 1){
-                let tr = $('<tr></tr>');
-                let td = $('<td></td>').attr("colspan", "100%").attr("align", "center");
-                td.text("Показать ещё (" + hidden + ")");
-                td.attr("data-hash", hash);
-                td.click( function() {
-                    $("tr[data-id='"+ hash +"']").each(function(index, element){
-                        if ($(this).css("display") == "none"){
-                            $(this).css('display', 'table-row');
-                            $("td[data-hash='"+hash+"']").text("Скрыть ("+hidden+")");
+                    tr.append($('<td></td>').text(startYear));
+                    for(let monthIndex = 1; monthIndex <= 12; monthIndex++){
+                        if(monthIndex < 10){
+                            monthString = "0" + monthIndex + "" + startYear;
                         }else{
-                            $(this).css('display', 'none');
-                            $("td[data-hash='"+hash+"']").text("Показать ("+hidden+")");
+                            monthString = monthIndex + "" + startYear;
                         }
-                    })
-                });
-                tr.append(td);
+                        let value = -1;
+                        if(typeof periodsMetadata.periods[monthString] !== "undefined"){
+                            value = element['row_' + periodsMetadata.periods[monthString].index];
+                        }
+                        if(Math.fmod(value, 1) > 0){
+                            value = value.toFixed(2);
+                        }
+                        if(value > -1){
+                            tr.append($('<td></td>').text(value).attr("title", periodsMetadata.periods[monthString].period).css("background-color", getColor(value, {{$minValue}},{{$maxValue}},{{$invertColor}})));
+                        }else{
+                            tr.append($('<td></td>').text("-"));
+                        }
+                    }
+                    $('#data-container').append(tr);
+                    startYear++;
+                    rowsCount++;
+                }while(startYear <= endYear);
+                let tr = $('<tr></tr>');
+                tr.append($('<td></td>').text("Всего").css("font-weight", "bold"));
+                tr.append($('<td></td>').text(total).attr("colspan", 12).css("text-align", "center"));
                 $('#data-container').append(tr);
-
-            }
+            });
             if(loadNextLine.index < urls.length - 1){
                 return true;
             }else{
                 return false;
             }
-        }
-
-        function getHash(string){
-            var hash = 0, i, chr;
-            for (i = 0; i < string.length; i++) {
-                chr   = string.charCodeAt(i);
-                hash  = ((hash << 5) - hash) + chr;
-                hash |= 0;
-            }
-            return hash;
         }
 
         function getColor(value, min, max, mirror=0, brithness=0.8) {
@@ -256,7 +191,6 @@
             loadNextLine();
             loadNextLine();
             loadNextLine();
-            loadNextLine();
         }
         $(window).scroll(function() {
             if(($(window).scrollTop() + $(window).height() >= $(document).height() - 200) && !inProgress && hasMore == true && isSearch == false) {
@@ -266,9 +200,6 @@
                     hasMore = hasMore;
                 });
             }
-        });
-        $("#interval-select").change(function(){
-            $(this).closest("form").submit();
         });
 
 
