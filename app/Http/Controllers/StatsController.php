@@ -20,7 +20,7 @@ class StatsController extends Controller
     public function impressions(Request $request)
     {
         $request->validate([
-            'interval' => 'integer',
+            'interval' => 'string|in:week,month,quarter',
         ]);
 
         $user = Auth::user();
@@ -34,8 +34,8 @@ class StatsController extends Controller
         $maxDate = $clickHouse->getMaxDate();
         $periods = $this->getPeriods($minDate, $maxDate, $interval);
         $urls = $clickHouse->getUrls($periods);
-        return view("stats.positions")
-            ->with("callback", "/stats/get_url_positions")
+        return view("stats.history")
+            ->with("callback", "/stats/get_url_history")
             ->with("title", "История показов")
             ->with("periods", $periods)
             ->with("urls", $urls)
@@ -53,7 +53,7 @@ class StatsController extends Controller
     public function clicks(Request $request)
     {
         $request->validate([
-            'interval' => 'integer',
+            'interval' => 'string|in:week,month,quarter',
         ]);
         $user = Auth::user();
         $site_id = $request->session()->get("site_id", 1);
@@ -66,8 +66,8 @@ class StatsController extends Controller
         $maxDate = $clickHouse->getMaxDate();
         $periods = $this->getPeriods($minDate, $maxDate, $interval);
         $urls = $clickHouse->getUrls($periods);
-        return view("stats.positions")
-            ->with("callback", "/stats/get_url_positions")
+        return view("stats.history")
+            ->with("callback", "/stats/get_url_history")
             ->with("title", "История показов")
             ->with("periods", $periods)
             ->with("urls", $urls)
@@ -85,7 +85,7 @@ class StatsController extends Controller
     public function ctr(Request $request)
     {
         $request->validate([
-            'interval' => 'integer',
+            'interval' => 'string|in:week,month,quarter',
         ]);
         $user = Auth::user();
         $site_id = $request->session()->get("site_id", 1);
@@ -96,10 +96,11 @@ class StatsController extends Controller
         $clickHouse->setSite($site_id);
         $minDate = $clickHouse->getMinDate();
         $maxDate = $clickHouse->getMaxDate();
+        $maxValue = $clickHouse->getMaxValue("ctr", $interval, "avg");
         $periods = $this->getPeriods($minDate, $maxDate, $interval);
         $urls = $clickHouse->getUrls($periods);
-        return view("stats.positions")
-            ->with("callback", "/stats/get_url_positions")
+        return view("stats.history")
+            ->with("callback", "/stats/get_url_history")
             ->with("title", "История показов")
             ->with("periods", $periods)
             ->with("urls", $urls)
@@ -108,7 +109,7 @@ class StatsController extends Controller
             ->with("interval", $interval)
             ->with("field", "avg_ctr")
             ->with("minValue", "0")
-            ->with("maxValue", "0.5")
+            ->with("maxValue", $maxValue)
             ->with("aggFunction", 'avg')
             ->with("useKeywords", true)
             ->with("invertColor", false);
@@ -117,7 +118,7 @@ class StatsController extends Controller
     public function positions(Request $request)
     {
         $request->validate([
-            'interval' => 'integer',
+            'interval' => 'string|in:week,month,quarter',
         ]);
         $user = Auth::user();
         $site_id = $request->session()->get("site_id", 1);
@@ -130,8 +131,8 @@ class StatsController extends Controller
         $maxDate = $clickHouse->getMaxDate();
         $periods = $this->getPeriods($minDate, $maxDate, $interval);
         $urls = $clickHouse->getUrls($periods);
-        return view("stats.positions")
-            ->with("callback", "/stats/get_url_positions")
+        return view("stats.history")
+            ->with("callback", "/stats/get_url_history")
             ->with("title", "История позиций")
             ->with("periods", $periods)
             ->with("urls", $urls)
@@ -142,7 +143,6 @@ class StatsController extends Controller
             ->with("aggFunction", 'avg')
             ->with("minValue", "1")
             ->with("maxValue", "20")
-            ->with("useKeywords", true)
             ->with("invertColor", true);
     }
 
@@ -156,11 +156,12 @@ class StatsController extends Controller
         $clickHouse->setSite($site_id);
         $minDate = $clickHouse->getMinDate();
         $maxDate = $clickHouse->getMaxDate();
-        $periods = $this->getMonthsPeriods($minDate, $maxDate);
+        $maxValue = $clickHouse->getMaxValue("pageviews", "month", "sum");
+        $periods = $this->getPeriods($minDate, $maxDate, "month", true);
         $periodsMetadata = $this->getPeriodsMetadata($periods);
         $urls = $clickHouse->getUrls($periods);
-        return view("stats.pageviews")
-            ->with("callback", "/stats/get_url_pageviews")
+        return view("stats.calendar")
+            ->with("callback", "/stats/get_url_calendar")
             ->with("title", "Просмотры")
             ->with("periods", $periods)
             ->with("periodsMetadata", $periodsMetadata)
@@ -170,7 +171,7 @@ class StatsController extends Controller
             ->with("field", 'pageviews')
             ->with("aggFunction", 'sum')
             ->with("minValue", "0")
-            ->with("maxValue", "15000")
+            ->with("maxValue", $maxValue)
             ->with("invertColor", false);
     }
 
@@ -184,11 +185,12 @@ class StatsController extends Controller
         $clickHouse->setSite($site_id);
         $minDate = $clickHouse->getMinDate();
         $maxDate = $clickHouse->getMaxDate();
-        $periods = $this->getMonthsPeriods($minDate, $maxDate);
+        $maxValue = $clickHouse->getMaxValue("revenue", "month", "sum");
+        $periods = $this->getPeriods($minDate, $maxDate, "month", true);
         $periodsMetadata = $this->getPeriodsMetadata($periods);
         $urls = $clickHouse->getUrls($periods);
-        return view("stats.pageviews")
-            ->with("callback", "/stats/get_url_pageviews")
+        return view("stats.calendar")
+            ->with("callback", "/stats/get_url_calendar")
             ->with("title", "Доход")
             ->with("periods", $periods)
             ->with("periodsMetadata", $periodsMetadata)
@@ -198,7 +200,7 @@ class StatsController extends Controller
             ->with("field", 'adsenseRevenue')
             ->with("aggFunction", 'sum')
             ->with("minValue", "0")
-            ->with("maxValue", "5")
+            ->with("maxValue", $maxValue)
             ->with("invertColor", false);
     }
 
@@ -212,11 +214,12 @@ class StatsController extends Controller
         $clickHouse->setSite($site_id);
         $minDate = $clickHouse->getMinDate();
         $maxDate = $clickHouse->getMaxDate();
-        $periods = $this->getMonthsPeriods($minDate, $maxDate);
+        $maxValue = $clickHouse->getMaxValue("revenue", "month", "sum");
+        $periods = $this->getPeriods($minDate, $maxDate, "month", true);
         $periodsMetadata = $this->getPeriodsMetadata($periods);
         $urls = $clickHouse->getUrls($periods);
-        return view("stats.pageviews")
-            ->with("callback", "/stats/get_url_pageviews")
+        return view("stats.calendar")
+            ->with("callback", "/stats/get_url_calendar")
             ->with("title", "Просмотры из поиска")
             ->with("periods", $periods)
             ->with("periodsMetadata", $periodsMetadata)
@@ -226,16 +229,16 @@ class StatsController extends Controller
             ->with("field", 'organicSearches')
             ->with("aggFunction", 'sum')
             ->with("minValue", "0")
-            ->with("maxValue", "15000")
+            ->with("maxValue", $maxValue)
             ->with("invertColor", false);
     }
 
 
 
-    public function getUrlPositions(Request $request)
+    public function getUrlHistory(Request $request)
     {
         $request->validate([
-            'interval' => 'required|integer',
+            'interval' => 'required|string|in:week,month,quarter',
             'url' => 'required|url',
             'field' => 'required|in:impressions,clicks,avg_position,avg_ctr',
             'agg_function' => 'required|in:sum,avg'
@@ -259,11 +262,11 @@ class StatsController extends Controller
         $minDate = $clickHouse->getMinDate();
         $maxDate = $clickHouse->getMaxDate();
         $periods = $this->getPeriods($minDate, $maxDate, $interval);
-        $data = $clickHouse->getPositionsHistory($periods, $url, $field, $aggFunc);
+        $data = $clickHouse->getHistoryData($periods, $url, $field, $aggFunc);
         return response()->json($data);
     }
 
-    public function getUrlPageviews(Request $request)
+    public function getUrlCalendar(Request $request)
     {
         $request->validate([
             'url' => 'required|url',
@@ -287,8 +290,8 @@ class StatsController extends Controller
         $clickHouse->setSite($site_id);
         $minDate = $clickHouse->getMinDate();
         $maxDate = $clickHouse->getMaxDate();
-        $periods = $this->getMonthsPeriods($minDate, $maxDate);
-        $data = $clickHouse->getDetailedHistory($periods, $url, $field, $aggFunc);
+        $periods = $this->getPeriods($minDate, $maxDate, "month", true);
+        $data = $clickHouse->getHistoryData($periods, $url, $field, $aggFunc);
         return response()->json($data);
     }
 
@@ -306,23 +309,48 @@ class StatsController extends Controller
         return back();
     }
 
-    private function getPeriods($start_date, $end_date, $interval=30, $all=false)
+    private function getPeriods($start_date, $end_date, $interval="month", $all=false)
     {
         if ($start_date == "0000-00-00") {
             return array();
         }
         $startDate = DateTime::createFromFormat('Y-m-d', $start_date);
         $endDate = DateTime::createFromFormat('Y-m-d', $end_date);
+        if($interval == "week"){
+            $startDate->modify("this week");
+            $endDate->modify("this week +6 days");
+        }elseif($interval == "month"){
+            $startDate->modify('first day of this month');
+            $endDate->modify("last day of this month");
+        }elseif($interval == "quarter"){
+            $this->makeFirstDayOfQuarter($startDate);
+            $this->makeLastDayOfQuarter($endDate);
+        }
         $periods = array();
         $counter = 0;
         do {
             $counter++;
             $periodEndDate = $endDate->format("Y-m-d");
-            $endDate->modify("-$interval days");
+            if($interval == "week"){
+                $endDate->modify("this week");
+            }elseif($interval == "month"){
+                $endDate->modify("first day of this month");
+            }elseif($interval == "quarter"){
+                $this->makeFirstDayOfQuarter($endDate);
+            }
             $periodStartDate = $endDate->format("Y-m-d");
+            if($interval == "week"){
+                $periodName =  $periodStartDate . " - " . $periodEndDate;
+            }elseif($interval == "month"){
+                $periodName = $endDate->format("Y") . "-" . $endDate->format("n");
+            }elseif($interval == "quarter"){
+                $periodName = $endDate->format("Y") . "Q" . ceil($endDate->format("n")/3);
+            }
+            $endDate->modify("-1 days");
             array_unshift($periods, array(
                 "start_date" => $periodStartDate,
                 "end_date" => $periodEndDate,
+                "name" => $periodName,
             ));
             if ($all == false && $counter > 10) {
                 break;
@@ -331,28 +359,6 @@ class StatsController extends Controller
         return $periods;
     }
 
-    private function getMonthsPeriods($start_date, $end_date)
-    {
-        if ($start_date == "0000-00-00") {
-            return array();
-        }
-        $startDate = DateTime::createFromFormat('Y-m-d', $start_date);
-        $endDate = DateTime::createFromFormat('Y-m-d', $end_date);
-        $startDate->modify('first day of this month');
-        $endDate->modify("last day of this month");
-        $periods = array();
-        do {
-            $periodEndDate = $endDate->format("Y-m-d");
-            $endDate->modify("first day of this month");
-            $periodStartDate = $endDate->format("Y-m-d");
-            $endDate->modify("-1 days");
-            array_unshift($periods, array(
-                "start_date" => $periodStartDate,
-                "end_date" => $periodEndDate,
-            ));
-        } while ($endDate > $startDate);
-        return $periods;
-    }
 
     private function getPeriodsMetadata($periods)
     {
@@ -383,12 +389,41 @@ class StatsController extends Controller
         );
     }
 
+    private function makeLastDayOfQuarter(DateTime $date){
+        $month = $date->format('n') ;
+
+        if ($month < 4) {
+            $date->modify('last day of march ' . $date->format('Y'));
+        } elseif ($month > 3 && $month < 7) {
+            $date->modify('first day of june ' . $date->format('Y'));
+        } elseif ($month > 6 && $month < 10) {
+            $date->modify('first day of september ' . $date->format('Y'));
+        } elseif ($month > 9) {
+            $date->modify('first day of december ' . $date->format('Y'));
+        }
+
+    }
+
+    private function makeFirstDayOfQuarter(DateTime $date){
+        $month = $date->format('n') ;
+
+        if ($month < 4) {
+            $date->modify('first day of january ' . $date->format('Y'));
+        } elseif ($month > 3 && $month < 7) {
+            $date->modify('first day of april ' . $date->format('Y'));
+        } elseif ($month > 6 && $month < 10) {
+            $date->modify('first day of july ' . $date->format('Y'));
+        } elseif ($month > 9) {
+            $date->modify('first day of october ' . $date->format('Y'));
+        }
+    }
+
     private function getInterval(Request $request)
     {
         if ($request->session()->has("interval")) {
             $saved_interval = $request->session()->get("interval");
         } else {
-            $saved_interval = 30;
+            $saved_interval = 'month';
         }
         $interval = $request->get("interval", $saved_interval);
         if ($interval != $saved_interval) {

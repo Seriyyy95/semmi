@@ -21,25 +21,6 @@ class ClickHousePositions extends ClickHouse
         return self::$instance;
     }
 
-    public function index(array $data)
-    {
-        if (count($data) == 0) {
-            return;
-        }
-        $keys = array_keys($data[0]);
-        $keys[] = "site_id";
-        $keys[] = "user_id";
-        $keysString = implode(",", $keys);
-        $valuesArray = array();
-        foreach ($data as $row) {
-            $row["site_id"] = $this->site_id;
-            $row["user_id"] = $this->user_id;
-            $valuesArray[] .= "('" . implode("','", array_values($row)) . "') ";
-        }
-        $valuesString = implode(", ", $valuesArray);
-        $this->db->write("INSERT INTO {$this->database}.{$this->table} ($keysString) VALUES $valuesString");
-    }
-
     public function getUrls()
     {
         $query = "SELECT url, SUM(impressions) as total_impressions FROM {$this->database}.positions WHERE user_id={$this->user_id} AND site_id={$this->site_id} GROUP BY url ORDER BY total_impressions DESC";
@@ -47,7 +28,7 @@ class ClickHousePositions extends ClickHouse
         return $result->rows();
     }
 
-    public function getPositionsHistory($periods, $url, $field="impressions", $function="sum")
+    public function getHistoryData($periods, $url, $field="impressions", $function="sum")
     {
         $periodsData = array();
         $counter = 0;

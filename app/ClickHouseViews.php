@@ -21,25 +21,6 @@ class ClickHouseViews extends ClickHouse
         return self::$instance;
     }
 
-    public function index(array $data)
-    {
-        if (count($data) == 0) {
-            return;
-        }
-        $keys = array_keys($data[0]);
-        $keys[] = "site_id";
-        $keys[] = "user_id";
-        $keysString = implode(",", $keys);
-        $valuesArray = array();
-        foreach ($data as $row) {
-            $row["site_id"] = $this->site_id;
-            $row["user_id"] = $this->user_id;
-            $valuesArray[] .= "('" . implode("','", array_values($row)) . "') ";
-        }
-        $valuesString = implode(", ", $valuesArray);
-        $this->db->write("INSERT INTO {$this->database}.{$this->table} ($keysString) VALUES $valuesString");
-    }
-
     public function getUrls()
     {
         $query = "SELECT url, SUM(pageviews) as total_pageviews FROM {$this->database}.{$this->table} WHERE user_id={$this->user_id} AND site_id={$this->site_id} GROUP BY url HAVING total_pageviews > 100 ORDER BY total_pageviews DESC";
@@ -47,7 +28,8 @@ class ClickHouseViews extends ClickHouse
         return $result->rows();
     }
 
-    public function getDetailedHistory($periods, $url, $field="pageviews", $function="sum")
+
+    public function getHistoryData($periods, $url, $field="pageviews", $function="sum")
     {
         $periodsData = array();
         $counter = 0;
@@ -57,12 +39,8 @@ class ClickHouseViews extends ClickHouse
         }
         $periodsString = implode(", ", $periodsData);
         $query = "SELECT url,$periodsString, $function($field) as total FROM {$this->database}.{$this->table} WHERE url='$url' GROUP BY url ORDER BY url DESC LIMIT 250";
-//        $summaryQuery = "SELECT url,$periodsString FROM {$this->database}.{$this->table} WHERE url='$url' GROUP BY url LIMIT 1";
         $result = $this->db->select($query);
-//        $summary = $this->db->select($summaryQuery)->fetchOne();
-//        $summary["keyword"] = "Общее";
         $data = $result->rows();
-//        array_unshift($data, $summary);
         return $data;
     }
 

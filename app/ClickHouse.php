@@ -26,9 +26,48 @@ abstract class ClickHouse
         $this->createTablesIfNotExist();
     }
 
-    abstract public function index(array $data);
     abstract public function getUrls();
     abstract protected function createTablesIfNotExist();
+
+    public function index(array $data)
+    {
+        if (count($data) == 0) {
+            return;
+        }
+        $keys = array_keys($data[0]);
+        $keys[] = "site_id";
+        $keys[] = "user_id";
+        $keysString = implode(",", $keys);
+        $valuesArray = array();
+        foreach ($data as $row) {
+            $row["site_id"] = $this->site_id;
+            $row["user_id"] = $this->user_id;
+            $valuesArray[] .= "('" . implode("','", array_values($row)) . "') ";
+        }
+        $valuesString = implode(", ", $valuesArray);
+        $this->db->write("INSERT INTO {$this->database}.{$this->table} ($keysString) VALUES $valuesString");
+    }
+
+    public function getMaxValue($field, $interval, $aggFunc){
+        if($interval == "week"){
+            $groupFunc = "toStartOfWeek";
+        }elseif($interval == "month"){
+            $groupFunc = "toStartOfMonth";
+        }elseif($interval == "quarter"){
+            $groupFunc = "toStartOfQuarter";
+        }else{
+            throw new \Exception("Invalid interval: $interval");
+        }
+        $query = "SELECT MAX(data) as max_value FROM (SELECT url,$groupFunc(date) as group_date, $aggFunc($field) as data FROM {$this->database}.{$this->table} WHERE user_id={$this->user_id} AND site_id={$this->site_id} GROUP BY url,group_date)";
+        $result = $this->db->select($query);
+        $rows = $result->rows();
+        if (count($rows) > 0) {
+            return $rows[0]["max_value"];
+        }else{
+            return 0;
+        }
+
+    }
 
 
     public function setUser(int $user_id)
@@ -40,42 +79,6 @@ abstract class ClickHouse
     {
         $this->site_id = $site_id;
     }
-
-    public function getPositionsHistory($periods, $url, $field="impressions", $function="sum")
-    {
-        $periodsData = array();
-        $counter = 0;
-        foreach ($periods as $period) {
-            $periodsData[] = "{$function}If($field, date > '{$period['start_date']}' and date < '{$period['end_date']}') as row_$counter";
-            $counter++;
-        }
-        $periodsString = implode(", ", $periodsData);
-        $query = "SELECT url,keyword,$periodsString, count($field) as total FROM {$this->database}.{$this->table} WHERE url='$url' GROUP BY url,keyword ORDER BY url, total DESC LIMIT 100";
-        $summaryQuery = "SELECT url,$periodsString FROM {$this->database}.positions WHERE url='$url' GROUP BY url LIMIT 1";
-        $result = $this->db->select($query);
-        $summary = $this->db->select($summaryQuery)->fetchOne();
-        $summary["keyword"] = "Общее";
-        $data = $result->rows();
-        array_unshift($data, $summary);
-        return $data;
-    }
-
-    public function getChangesData($field, $firstPeriod, $secondPeriod)
-    {
-        $query = "SELECT url, sumIf($field, date > '{$firstPeriod["startDate"]}' and date < '{$firstPeriod["endDate"]}') as data, sumIf($field, date > '{$secondPeriod["startDate"]}' and date < '{$secondPeriod["endDate"]}') as previous_data, minus(previous_data, data) as result FROM {$this->database}.{$this->table} WHERE user_id={$this->user_id} AND site_id={$this->site_id} GROUP BY url ORDER BY data DESC";
-        $result = $this->db->select($query);
-        $data = $result->rows();
-        return $data;
-    }
-
-    public function getKeywordsChangesData($url, $firstPeriod, $secondPeriod, $field)
-    {
-        $query = "SELECT keyword, sumIf($field, date > '{$firstPeriod["startDate"]}' and date < '{$firstPeriod["endDate"]}') as data, sumIf($field, date > '{$secondPeriod["startDate"]}' and date < '{$secondPeriod["endDate"]}') as previous_data, minus(previous_data, data) as result FROM {$this->database}.{$this->table} WHERE user_id={$this->user_id} AND site_id={$this->site_id} AND url='$url' GROUP BY keyword ORDER BY data DESC";
-        $result = $this->db->select($query);
-        $data = $result->rows();
-        return $data;
-    }
-
 
     public function delete()
     {
