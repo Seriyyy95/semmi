@@ -100,7 +100,7 @@ class GaAccountsController extends Controller
                 }
                 GaLoadJob::dispatch($gscTask)
                     ->onConnection('database')
-                    ->onQueue("ga_data");
+                    ->onQueue("gsc_data");
             }
             $site->last_task_id = $lastTaskId;
             $site->parsent = 0;

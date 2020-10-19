@@ -50,6 +50,7 @@ Route::get("stats/impressions", "StatsController@impressions")->name("stats.impr
 Route::get("stats/ctr", "StatsController@ctr")->name("stats.ctr");
 Route::get("stats/pageviews", "StatsController@pageviews")->name("stats.pageviews");
 Route::get("stats/revenue", "StatsController@revenue")->name("stats.revenue");
+Route::get("stats/organic_searches", "StatsController@organicSearches")->name("stats.organic_searches");
 Route::get("stats/select", "StatsController@selectSite")->name("stats.select_site");
 Route::get("stats/get_url_positions", "StatsController@getUrlPositions")->name("stats.get_url_positions");
 Route::get("stats/get_url_pageviews", "StatsController@getUrlPageviews")->name("stats.get_url_pageviews");

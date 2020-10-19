@@ -259,6 +259,11 @@ return [
             'icon' => 'fas fa-fw fa-eye',
         ],
         [
+            'text' => 'Просмотры из поиска',
+            'url'  => '/stats/organic_searches',
+            'icon' => 'fas fa-fw fa-eye',
+        ],
+        [
             'text' => 'Доход',
             'url'  => '/stats/revenue',
             'icon' => 'fas fa-fw fa-dollar-sign',

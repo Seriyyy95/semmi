@@ -171,7 +171,6 @@ class StatsController extends Controller
             ->with("aggFunction", 'sum')
             ->with("minValue", "0")
             ->with("maxValue", "15000")
-            ->with("useKeywords", false)
             ->with("invertColor", false);
     }
 
@@ -202,6 +201,36 @@ class StatsController extends Controller
             ->with("maxValue", "5")
             ->with("invertColor", false);
     }
+
+    public function organicSearches(Request $request)
+    {
+        $user = Auth::user();
+        $site_id = $request->session()->get("site_id", 1);
+        $sites = GoogleAnalyticsSite::where("user_id", $user->id)->get();
+        $clickHouse = ClickHouseViews::getInstance();
+        $clickHouse->setUser($user->id);
+        $clickHouse->setSite($site_id);
+        $minDate = $clickHouse->getMinDate();
+        $maxDate = $clickHouse->getMaxDate();
+        $periods = $this->getMonthsPeriods($minDate, $maxDate);
+        $periodsMetadata = $this->getPeriodsMetadata($periods);
+        $urls = $clickHouse->getUrls($periods);
+        return view("stats.pageviews")
+            ->with("callback", "/stats/get_url_pageviews")
+            ->with("title", "Просмотры из поиска")
+            ->with("periods", $periods)
+            ->with("periodsMetadata", $periodsMetadata)
+            ->with("urls", $urls)
+            ->with("site_id", $site_id)
+            ->with("sites", $sites)
+            ->with("field", 'organicSearches')
+            ->with("aggFunction", 'sum')
+            ->with("minValue", "0")
+            ->with("maxValue", "15000")
+            ->with("invertColor", false);
+    }
+
+
 
     public function getUrlPositions(Request $request)
     {
