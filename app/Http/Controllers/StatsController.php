@@ -185,7 +185,7 @@ class StatsController extends Controller
         $clickHouse->setSite($site_id);
         $minDate = $clickHouse->getMinDate();
         $maxDate = $clickHouse->getMaxDate();
-        $maxValue = $clickHouse->getMaxValue("revenue", "month", "sum");
+        $maxValue = $clickHouse->getMaxValue("adsenseRevenue", "month", "sum");
         $periods = $this->getPeriods($minDate, $maxDate, "month", true);
         $periodsMetadata = $this->getPeriodsMetadata($periods);
         $urls = $clickHouse->getUrls($periods);
@@ -214,7 +214,7 @@ class StatsController extends Controller
         $clickHouse->setSite($site_id);
         $minDate = $clickHouse->getMinDate();
         $maxDate = $clickHouse->getMaxDate();
-        $maxValue = $clickHouse->getMaxValue("revenue", "month", "sum");
+        $maxValue = $clickHouse->getMaxValue("organicSearches", "month", "sum");
         $periods = $this->getPeriods($minDate, $maxDate, "month", true);
         $periodsMetadata = $this->getPeriodsMetadata($periods);
         $urls = $clickHouse->getUrls($periods);
@@ -316,13 +316,13 @@ class StatsController extends Controller
         }
         $startDate = DateTime::createFromFormat('Y-m-d', $start_date);
         $endDate = DateTime::createFromFormat('Y-m-d', $end_date);
-        if($interval == "week"){
+        if ($interval == "week") {
             $startDate->modify("this week");
             $endDate->modify("this week +6 days");
-        }elseif($interval == "month"){
+        } elseif ($interval == "month") {
             $startDate->modify('first day of this month');
             $endDate->modify("last day of this month");
-        }elseif($interval == "quarter"){
+        } elseif ($interval == "quarter") {
             $this->makeFirstDayOfQuarter($startDate);
             $this->makeLastDayOfQuarter($endDate);
         }
@@ -331,19 +331,19 @@ class StatsController extends Controller
         do {
             $counter++;
             $periodEndDate = $endDate->format("Y-m-d");
-            if($interval == "week"){
+            if ($interval == "week") {
                 $endDate->modify("this week");
-            }elseif($interval == "month"){
+            } elseif ($interval == "month") {
                 $endDate->modify("first day of this month");
-            }elseif($interval == "quarter"){
+            } elseif ($interval == "quarter") {
                 $this->makeFirstDayOfQuarter($endDate);
             }
             $periodStartDate = $endDate->format("Y-m-d");
-            if($interval == "week"){
+            if ($interval == "week") {
                 $periodName =  $periodStartDate . " - " . $periodEndDate;
-            }elseif($interval == "month"){
+            } elseif ($interval == "month") {
                 $periodName = $endDate->format("Y") . "-" . $endDate->format("n");
-            }elseif($interval == "quarter"){
+            } elseif ($interval == "quarter") {
                 $periodName = $endDate->format("Y") . "Q" . ceil($endDate->format("n")/3);
             }
             $endDate->modify("-1 days");
@@ -389,7 +389,8 @@ class StatsController extends Controller
         );
     }
 
-    private function makeLastDayOfQuarter(DateTime $date){
+    private function makeLastDayOfQuarter(DateTime $date)
+    {
         $month = $date->format('n') ;
 
         if ($month < 4) {
@@ -401,10 +402,10 @@ class StatsController extends Controller
         } elseif ($month > 9) {
             $date->modify('first day of december ' . $date->format('Y'));
         }
-
     }
 
-    private function makeFirstDayOfQuarter(DateTime $date){
+    private function makeFirstDayOfQuarter(DateTime $date)
+    {
         $month = $date->format('n') ;
 
         if ($month < 4) {
