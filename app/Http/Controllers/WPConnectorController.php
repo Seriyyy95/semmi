@@ -66,6 +66,8 @@ class WPConnectorController extends Controller
                 $domain = $urlParts["scheme"] . "://". $urlParts["host"]. "/";
                 if (substr($url["post_url"], -1) == '/') {
                     $link = substr($url["post_url"], 0, -1);
+                } else {
+                    $link = $url["post_url"];
                 }
 
                 $newUrl = new WPUrl();

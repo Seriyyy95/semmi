@@ -14,7 +14,7 @@
             </vue-select>
         </div>
         <div class="col-md-3">
-            @include ('siteselector', ["route" => "stats.select_wp_site "])
+            @include ('siteselector', ["route" => "stats.select_wp_site"])
         </div>
     </div>
 

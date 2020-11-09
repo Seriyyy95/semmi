@@ -269,9 +269,6 @@ return [
             'icon' => 'fas fa-fw fa-dollar-sign',
         ],
 
-
-
-
         ['header' => 'Изменения'],
         [
             'text' => 'Показы',
@@ -283,6 +280,14 @@ return [
             'url'  => '/changes/clicks',
             'icon' => 'fas fa-fw fa-mouse',
         ],
+
+        ['header' => 'Другое'],
+        [
+            'text' => 'Баланс',
+            'url'  => 'balance',
+            'icon' => 'fas fa-fw fa-user',
+        ],
+
         ['header' => 'Настройки'],
         [
             'text' => 'Настройка доступа',
