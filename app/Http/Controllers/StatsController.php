@@ -298,7 +298,7 @@ class StatsController extends Controller
     public function selectGscSite(Request $request)
     {
         $site_id = $request->get("site_id");
-        $gaSite = GoogleAnalyticsSite::find($site_id);
+        $gaSite = GoogleGscSite::find($site_id);
 
         if ($gaSite == null) {
             return back()->withFail("Сайт $site_id не найден!");
@@ -312,6 +312,7 @@ class StatsController extends Controller
     {
         $site_id = $request->get("site_id");
         $gaSite = GoogleAnalyticsSite::find($site_id);
+        dd($site_id);
 
         if ($gaSite == null) {
             return back()->withFail("Сайт $site_id не найден!");
