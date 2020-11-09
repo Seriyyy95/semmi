@@ -17,7 +17,7 @@ class GaLoadJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public $tries = 1;
+    public $tries = 10;
     public $timout = 0;
     public $gaTask;
 

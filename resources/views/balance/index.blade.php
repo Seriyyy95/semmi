@@ -98,7 +98,7 @@
                     this.isSearch = true;
                     this.index = 0;
                     this.items = [];
-                    this.selected_option = this.select_options[index];
+                    this.selected_option = this.select_options[index+1];
 
                     if(index == -1){
                         this.isSearch = false;
