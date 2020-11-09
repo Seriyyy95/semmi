@@ -24,7 +24,7 @@ class StatsController extends Controller
         ]);
 
         $user = Auth::user();
-        $site_id = $request->session()->get("site_id", 1);
+        $site_id = $request->session()->get("gsc_site_id", 1);
         $interval = $this->getInterval($request);
         $sites = GoogleGscSite::where("user_id", $user->id)->get();
         $clickHouse = ClickHousePositions::getInstance();
@@ -56,7 +56,7 @@ class StatsController extends Controller
             'interval' => 'string|in:week,month,quarter',
         ]);
         $user = Auth::user();
-        $site_id = $request->session()->get("site_id", 1);
+        $site_id = $request->session()->get("gsc_site_id", 1);
         $interval = $this->getInterval($request);
         $sites = GoogleGscSite::where("user_id", $user->id)->get();
         $clickHouse = ClickHousePositions::getInstance();
@@ -88,7 +88,7 @@ class StatsController extends Controller
             'interval' => 'string|in:week,month,quarter',
         ]);
         $user = Auth::user();
-        $site_id = $request->session()->get("site_id", 1);
+        $site_id = $request->session()->get("gsc_site_id", 1);
         $interval = $this->getInterval($request);
         $sites = GoogleGscSite::where("user_id", $user->id)->get();
         $clickHouse = ClickHousePositions::getInstance();
@@ -121,7 +121,7 @@ class StatsController extends Controller
             'interval' => 'string|in:week,month,quarter',
         ]);
         $user = Auth::user();
-        $site_id = $request->session()->get("site_id", 1);
+        $site_id = $request->session()->get("gsc_site_id", 1);
         $interval = $this->getInterval($request);
         $sites = GoogleGscSite::where("user_id", $user->id)->get();
         $clickHouse = ClickHousePositions::getInstance();
@@ -149,7 +149,7 @@ class StatsController extends Controller
     public function pageviews(Request $request)
     {
         $user = Auth::user();
-        $site_id = $request->session()->get("site_id", 1);
+        $site_id = $request->session()->get("ga_site_id", 1);
         $sites = GoogleAnalyticsSite::where("user_id", $user->id)->get();
         $clickHouse = ClickHouseViews::getInstance();
         $clickHouse->setUser($user->id);
@@ -178,7 +178,7 @@ class StatsController extends Controller
     public function revenue(Request $request)
     {
         $user = Auth::user();
-        $site_id = $request->session()->get("site_id", 1);
+        $site_id = $request->session()->get("ga_site_id", 1);
         $sites = GoogleAnalyticsSite::where("user_id", $user->id)->get();
         $clickHouse = ClickHouseViews::getInstance();
         $clickHouse->setUser($user->id);
@@ -207,7 +207,7 @@ class StatsController extends Controller
     public function organicSearches(Request $request)
     {
         $user = Auth::user();
-        $site_id = $request->session()->get("site_id", 1);
+        $site_id = $request->session()->get("ga_site_id", 1);
         $sites = GoogleAnalyticsSite::where("user_id", $user->id)->get();
         $clickHouse = ClickHouseViews::getInstance();
         $clickHouse->setUser($user->id);
@@ -244,7 +244,7 @@ class StatsController extends Controller
             'agg_function' => 'required|in:sum,avg'
         ]);
         $user = Auth::user();
-        $site_id = $request->session()->get("site_id", 1);
+        $site_id = $request->session()->get("gsc_site_id", 1);
         $url = $request->get("url");
         $field = $request->get("field");
         $interval = $request->get("interval");
@@ -274,7 +274,7 @@ class StatsController extends Controller
             'agg_function' => 'required|in:sum,avg'
         ]);
         $user = Auth::user();
-        $site_id = $request->session()->get("site_id", 1);
+        $site_id = $request->session()->get("ga_site_id", 1);
         $url = $request->get("url");
         $field = $request->get("field");
         $aggFunc = $request->get("agg_function");
@@ -295,19 +295,45 @@ class StatsController extends Controller
         return response()->json($data);
     }
 
-    public function selectSite(Request $request)
+    public function selectGscSite(Request $request)
     {
         $site_id = $request->get("site_id");
-        $gscSite = GoogleGscSite::find($site_id);
         $gaSite = GoogleAnalyticsSite::find($site_id);
 
-        if ($gscSite == null && $gaSite == null) {
+        if ($gaSite == null) {
             return back()->withFail("Сайт $site_id не найден!");
         }
         $request->session()->forget('search_url');
-        $request->session()->put('site_id', $site_id);
+        $request->session()->put('gsc_site_id', $site_id);
         return back();
     }
+
+    public function selectGaSite(Request $request)
+    {
+        $site_id = $request->get("site_id");
+        $gaSite = GoogleAnalyticsSite::find($site_id);
+
+        if ($gaSite == null) {
+            return back()->withFail("Сайт $site_id не найден!");
+        }
+        $request->session()->forget('search_url');
+        $request->session()->put('ga_site_id', $site_id);
+        return back();
+    }
+
+    public function selectWpSite(Request $request)
+    {
+        $site_id = $request->get("site_id");
+
+        /*        if ($gaSite == null) {
+                    return back()->withFail("Сайт $site_id не найден!");
+                }*/
+        $request->session()->forget('search_url');
+        $request->session()->put('wp_site_id', $site_id);
+        return back();
+    }
+
+
 
     private function getPeriods($start_date, $end_date, $interval="month", $all=false)
     {

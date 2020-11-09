@@ -34,7 +34,7 @@
         </form>
     </div>
     <div class="col-md-3">
-        @include ('siteselector')
+        @include ('siteselector', ["route" => "stats.select_gsc_site"])
     </div>
 </div>
 @endsection
@@ -82,10 +82,10 @@
         <tr>
             <td>Баланс:</td>
             <td>
-                @php ($balance = $totalGrown + $totalDown)
-                @if ($balance > 0) 
+                @php ($balance = $totalGrown + $totalDown) @endphp
+                @if ($balance > 0)
                     <span style="color:green">+{{$balance}}</span>
-                @else 
+                @else
                     <span style="color:red">{{$balance}}</span>
                 @endif
             </td>
@@ -139,11 +139,12 @@
                             <td>{{$row["previous_data"]}}</td>
                             <td style="color:green">+{{$row["result"]}}</td>
                             <td>
-                                @php($params = array())
-                                @php($params["url"] = $row["url"])
-                                @php($params["field"] = $field)
-                                @php($params["first_period"] = $first_period["startDate"] . " - ". $first_period["endDate"])
-                                @php($params["second_period"] = $second_period["startDate"] . " - ". $second_period["endDate"])
+                                @php($params = array()) @endphp
+                                @php($params["url"] = $row["url"]) @endphp
+                                @php($params["field"] = $field) @endphp
+                                @php($params["first_period"] = $first_period["startDate"] . " - ". $first_period["endDate"]) @endphp
+                                @php($params["second_period"] = $second_period["startDate"] . " - ". $second_period["endDate"]) @endphp
+
                                 <button type="button" class="btn btn-primary" data-toggle="modal"
                                 data-target="#keywords-details"
                                 data-remote="{{route('changes.keywords', $params)}}">Ключи</button>
@@ -170,11 +171,11 @@
                             <td>{{$row["previous_data"]}}</td>
                             <td style="color:red">{{$row["result"]}}</td>
                             <td>
-                                @php($params = array())
-                                @php($params["url"] = $row["url"])
-                                @php($params["field"] = $field)
-                                @php($params["first_period"] = $first_period["startDate"] . " - ". $first_period["endDate"])
-                                @php($params["second_period"] = $second_period["startDate"] . " - ". $second_period["endDate"])
+                                @php($params = array()) @endphp
+                                @php($params["url"] = $row["url"]) @endphp
+                                @php($params["field"] = $field) @endphp
+                                @php($params["first_period"] = $first_period["startDate"] . " - ". $first_period["endDate"]) @endphp
+                                @php($params["second_period"] = $second_period["startDate"] . " - ". $second_period["endDate"]) @endphp
                                 <button type="button" class="btn btn-primary" data-toggle="modal"
                                 data-target="#keywords-details"
                                 data-remote="{{route('changes.keywords', $params)}}">Ключи</button>
@@ -204,10 +205,10 @@
                             <td>{{$row["result"]}}</td>
                             <td>
                                 @php($params = array())
-                                @php($params["url"] = $row["url"])
-                                @php($params["field"] = $field)
-                                @php($params["first_period"] = $first_period["startDate"] . " - ". $first_period["endDate"])
-                                @php($params["second_period"] = $second_period["startDate"] . " - ". $second_period["endDate"])
+                                @php($params["url"] = $row["url"]) @endphp
+                                @php($params["field"] = $field) @endphp
+                                @php($params["first_period"] = $first_period["startDate"] . " - ". $first_period["endDate"]) @endphp
+                                @php($params["second_period"] = $second_period["startDate"] . " - ". $second_period["endDate"]) @endphp
                                 <button type="button" class="btn btn-primary" data-toggle="modal"
                                 data-target="#keywords-details"
                                 data-remote="{{route('changes.keywords', $params)}}">Ключи</button>
@@ -255,5 +256,10 @@
             modal.find('.modal-body').load(button.data("remote"));
         });
     });
+    document.addEventListener('DOMContentLoaded', function(){
+            $('#site_id').change(function(){
+                $(this).closest("form").submit();
+            });
+    },true);
 </script>
 @endsection

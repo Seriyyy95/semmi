@@ -37,7 +37,7 @@ class ChangesController extends Controller
             'field' => 'required|in:impressions,clicks'
         ]);
         $user = Auth::user();
-        $site_id = $request->session()->get("site_id", 1);
+        $site_id = $request->session()->get("gsc_site_id", 1);
         $sites = GoogleGscSite::where("user_id", $user->id)->get();
         $url = $request->get("url");
         $field = $request->get("field", "impressions");
@@ -110,7 +110,7 @@ class ChangesController extends Controller
         ]);
 
         $user = Auth::user();
-        $site_id = $request->session()->get("site_id", 1);
+        $site_id = $request->session()->get("gsc_site_id", 1);
         $sites = GoogleGscSite::where("user_id", $user->id)->get();
 
         $clickHouse = ClickHousePositions::getInstance();

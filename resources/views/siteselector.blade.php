@@ -1,18 +1,12 @@
-<form method="GET" action="{{route('stats.select_site')}}">
+<form method="GET" action="{{route($route)}}">
     <select id="site_id" name="site_id" class="form-control">
         @foreach($sites as $site)
-        @if($site_id == $site->id)
-        <option value="{{$site->id}}" selected>{{$site->domain}}  @if(isset($site->profile_name)) ({{$site->profile_name}}) @endif</option>
+        @php ($current_site_id = isset($site->site_id) ?? $site->id) @endphp
+        @if($site_id == $current_site_id)
+        <option value="{{$current_site_id}}" selected>{{$site->domain}}  @if(isset($site->profile_name)) ({{$site->profile_name}}) @endif</option>
         @else
-        <option value="{{$site->id}}">{{$site->domain}} @if(isset($site->profile_name)) ({{$site->profile_name}}) @endif</option>
+        <option value="{{$current_site_id}}">{{$site->domain}} @if(isset($site->profile_name)) ({{$site->profile_name}}) @endif</option>
         @endif
         @endforeach
     </select>
-    <script>
-        document.addEventListener('DOMContentLoaded', function(){
-            $('#site_id').change(function(){
-                $(this).closest("form").submit();
-            });
-        },true);
-    </script>
 </form>

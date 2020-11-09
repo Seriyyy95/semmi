@@ -22,7 +22,7 @@
         </select>
     </div>
     <div class="col-md-3">
-        @include ('siteselector')
+        @include ('siteselector', ["route" => "stats.select_gsc_site"])
     </div>
 </div>
 @endsection
@@ -270,6 +270,12 @@
         $("#interval-select").change(function(){
             $(this).closest("form").submit();
         });
+        document.addEventListener('DOMContentLoaded', function(){
+            $('#site_id').change(function(){
+                $(this).closest("form").submit();
+            });
+        },true);
+
 
 
 </script>

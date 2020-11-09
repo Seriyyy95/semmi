@@ -299,6 +299,11 @@ return [
             'url'  => 'gaaccounts',
             'icon' => 'fas fa-fw fa-puzzle-piece',
         ],
+        [
+            'text' => 'Настройка WPConnector',
+            'url'  => 'wpconnector',
+            'icon' => 'fas fa-fw fa-user',
+        ],
 
     ],
 
@@ -433,5 +438,45 @@ return [
                 ],
             ],
         ],
+        [
+            'name' => 'Vue',
+            'active' => true,
+            'files' => [
+                [
+                    'type' => 'js',
+                    'asset' => false,
+                    'location' => '//unpkg.com/vue',
+                ],
+            ],
+        ],
+        [
+            'name' => 'Vue-select',
+            'active' => true,
+            'files' => [
+                [
+                    'type' => 'js',
+                    'asset' => false,
+                    'location' => '//unpkg.com/vue-select@latest',
+                ],
+                [
+                    'type' => 'css',
+                    'asset' => false,
+                    'location' => '//unpkg.com/vue-select@latest/dist/vue-select.css',
+                ],
+            ],
+        ],
+        [
+            'name' => 'Color',
+            'active' => true,
+            'files' => [
+                [
+                    'type' => 'js',
+                    'asset' => true,
+                    'location' => '/js/color.js',
+                ],
+            ],
+        ],
+
+
     ],
 ];

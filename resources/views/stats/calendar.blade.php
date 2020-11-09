@@ -13,7 +13,7 @@
         </select>
     </div>
     <div class="col-md-3">
-        @include ('siteselector')
+        @include ('siteselector', ["route" => "stats.select_ga_site"])
     </div>
 </div>
 @endsection
@@ -201,7 +201,11 @@
                 });
             }
         });
-
+        document.addEventListener('DOMContentLoaded', function(){
+            $('#site_id').change(function(){
+                $(this).closest("form").submit();
+            });
+        },true);
 
 </script>
 @if(Session::has('search_url'))
