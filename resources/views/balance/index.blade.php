@@ -4,8 +4,11 @@
 
 @section('content_header')
     <div class="row">
-        <div class="col-md-3">
+        <div class="col-md-2">
             <h1>Баланс</h1>
+        </div>
+        <div class="col-md-1">
+            <a href="{{route('balance.import')}}" class="btn btn-primary">Импорт</a>
         </div>
         <div class="col-md-6">
             <input class="form-control" v-model="searchText" @change="searchItem" />
@@ -33,7 +36,7 @@
                     <tr v-for="item in items">
                         <td v-text="item.url"></td>
                         <td v-text="item.title"></td>
-                        <td v-text="item.price" :data-item-id="item.id" @click="editItem" @blur="saveItem"></td>
+                        <td v-text="getPrice(item)" :data-item-id="item.id" @click="editItem" @blur="saveItem"></td>
                         <td v-colorize-revenue v-text="parseFloat(item.revenue).toFixed(2)"></td>
                         <td v-colorize-revenue v-text="getRevenue(item).toFixed(2)"></td>
                         <td v-colorize-month v-text="parseFloat(item.avg_revenue).toFixed(4)"></td>
@@ -106,6 +109,9 @@
                             }
                         }
                     }
+                },
+                getPrice: function(item){
+                    return item.price.toFixed(2);
                 },
                 getRevenue: function(item) {
                     return item.revenue - item.price;

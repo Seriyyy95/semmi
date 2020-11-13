@@ -121,4 +121,45 @@ class BalanceController extends Controller
         $wpUrl->save();
         return response()->json(array("success" => true));
     }
+
+    public function import()
+    {
+        return view('balance.import');
+    }
+
+    public function upload(Request $request)
+    {
+        $user_id = Auth::user()->id;
+        $site_id = $request->session()->get("wp_site_id", 1);
+
+        $file = $request->post_file;
+        $fileName = "uploaded-csv-" . time() . "." . $file->getClientOriginalExtension();
+
+        $tmpDir = "/tmp";
+        $filePath = $tmpDir . "/" . $fileName;
+        $file->move($tmpDir, $fileName);
+
+        $csvFile = fopen($filePath, 'r');
+
+        $count = 0;
+
+        while (($data = fgetcsv($csvFile, 1000, ",")) !== false) {
+            $url = trim($data[0]);
+            $price = trim($data[1]);
+            $price = str_replace(",", ".", $price);
+
+            if (strlen($url) > 0) {
+                $wpUrl = WPUrl::where("url", $url)
+                    ->where("user_id", $user_id)
+                    ->get()->first();
+                if ($wpUrl !== null) {
+                    $count++;
+                    $wpUrl->price = round($price, 2);
+                    $wpUrl->save();
+                }
+            }
+        }
+
+        return back()->withSuccess("Импортировано $count строк данных");
+    }
 }

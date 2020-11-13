@@ -69,3 +69,5 @@ Route::get("changes/keywords", "ChangesController@keywords")->name("changes.keyw
 Route::get("balance", "BalanceController@index")->name("balance.index");
 Route::get("balance/url_info", "BalanceController@urlInfo")->name("balance.url_info");
 Route::get("balance/update_item", "BalanceController@updateItem")->name("balance.update_item");
+Route::get("balance/import", "BalanceController@import")->name("balance.import");
+Route::post("balance/upload", "BalanceController@upload")->name("balance.upload");
