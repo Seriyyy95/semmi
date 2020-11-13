@@ -57,19 +57,19 @@ class WPConnectorController extends Controller
         $wpConnector->setApiKey($wpConnKey);
         $urls = $wpConnector->site($site_id)->listPosts();
         foreach ($urls as $url) {
-            $count = WPUrl::where("url", $url["post_url"])
+            $urlParts = parse_url(trim($url["post_url"]));
+            $domain = $urlParts["scheme"] . "://". $urlParts["host"]. "/";
+            if (substr($url["post_url"], -1) == '/') {
+                $link = substr($url["post_url"], 0, -1);
+            } else {
+                $link = $url["post_url"];
+            }
+
+            $count = WPUrl::where("url", $link)
                 ->where("user_id", $user_id)
                 ->where("site_id", $site_id)
                 ->count();
             if ($count == 0) {
-                $urlParts = parse_url(trim($url["post_url"]));
-                $domain = $urlParts["scheme"] . "://". $urlParts["host"]. "/";
-                if (substr($url["post_url"], -1) == '/') {
-                    $link = substr($url["post_url"], 0, -1);
-                } else {
-                    $link = $url["post_url"];
-                }
-
                 $newUrl = new WPUrl();
                 $newUrl->url = $link;
                 $newUrl->title = $url["title"];

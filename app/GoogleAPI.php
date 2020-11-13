@@ -213,8 +213,10 @@ class GoogleAPI
                             $scheme = parse_url($url);
                             $url = $scheme["scheme"] . "://" . $scheme["host"] . $scheme["path"];
                             $url = rtrim($url, "/");
-                            $url = rtrim($url, "amp/");
-                            $url = rtrim($url, "amp");
+                            if ($this->endsWith($url, "amp") || $this->endsWith($url, "amp/")) {
+                                $url = rtrim($url, "amp/");
+                                $url = rtrim($url, "amp");
+                            }
 
                             if (strlen($url) < 255) {
                                 $resultArray["url"] = $url;
@@ -284,5 +286,14 @@ class GoogleAPI
             }
         }
         return $allProfiles;
+    }
+
+    private function endsWith($haystack, $needle)
+    {
+        $length = strlen($needle);
+        if (!$length) {
+            return true;
+        }
+        return substr($haystack, -$length) === $needle;
     }
 }

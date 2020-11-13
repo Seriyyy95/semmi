@@ -58,7 +58,7 @@ class ClickHouseViews extends ClickHouse
 
     public function getAvgRevenue($url)
     {
-        $query = "SELECT AVG(revenue) as avg_revenue FROM (SELECT SUM(adsenseRevenue) as revenue FROM {$this->database}.{$this->table} WHERE url='$url' AND site_id={$this->site_id} AND user_id={$this->user_id} GROUP BY toStartOfMonth(date))";
+        $query = "SELECT AVG(revenue) as avg_revenue FROM (SELECT SUM(adsenseRevenue) as revenue FROM {$this->database}.{$this->table} WHERE url='$url' AND site_id={$this->site_id} AND user_id={$this->user_id} GROUP BY toStartOfMonth(date) HAVING revenue > 0)";
         $result = $this->db->select($query);
         $data = $result->rows();
         if (count($data) > 0 && $data[0]["avg_revenue"] > 0) {

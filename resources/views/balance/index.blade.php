@@ -8,10 +8,7 @@
             <h1>Баланс</h1>
         </div>
         <div class="col-md-6">
-            <vue-select :options="this.select_options" :value="this.selected_option" label="value" :reduce="option => option.id" @input="searchItem">
-                <option value="-1" selected="selected">Все данные</option>
-                <option v-for="(url,index) in this.urls" :value="index" v-text="url"></option>
-            </vue-select>
+            <input class="form-control" v-model="searchText" @change="searchItem" />
         </div>
         <div class="col-md-3">
             @include ('siteselector', ["route" => "stats.select_wp_site"])
@@ -30,26 +27,17 @@
                     <th>Заработано, USD</th>
                     <th>Разница, USD</th>
                     <th>В месяц, USD</th>
-                    <th>Окупаемость, лет</th>
+                    <th>Окупаемость, месяцев</th>
                 </thead>
                 <tbody>
-                    <tr v-for="item in items" v-if="isSearch == false">
+                    <tr v-for="item in items">
                         <td v-text="item.url"></td>
                         <td v-text="item.title"></td>
                         <td v-text="item.price" :data-item-id="item.id" @click="editItem" @blur="saveItem"></td>
                         <td v-colorize-revenue v-text="parseFloat(item.revenue).toFixed(2)"></td>
                         <td v-colorize-revenue v-text="getRevenue(item).toFixed(2)"></td>
                         <td v-colorize-month v-text="parseFloat(item.avg_revenue).toFixed(4)"></td>
-                        <td v-colorize-year v-text="getNumberOfYears(item)"></td>
-                    </tr>
-                    <tr v-else>
-                        <td v-text="items[0].url"></td>
-                        <td v-text="items[0].title"></td>
-                        <td v-text="items[0].price" :data-item-id="items[0].id" @click="editItem" @blur="saveItem"></td>
-                        <td v-colorize-revenue v-text="parseFloat(items[0].revenue).toFixed(2)"></td>
-                        <td v-colorize-revenue v-text="getRevenue(items[0]).toFixed(2)"></td>
-                        <td v-colorize-month v-text="parseFloat(items[0].avg_revenue).toFixed(4)"></td>
-                        <td v-colorize-year v-text="getNumberOfYears(items[0])"></td>
+                        <td v-colorize-year v-text="getNumberOfMonths(item)"></td>
                     </tr>
                 <tbody>
             </table>
@@ -63,24 +51,23 @@
             data: function() {
                 return {
                     urls: {!!json_encode($urls) !!},
-                    select_options: [],
-                    selected_option: null,
+                    searchItems: [],
+                    searchText: '',
                     items: [],
                     index: 0,
-                    isSearch: false,
                 };
-            },
-            components: {
-                'vue-select': VueSelect.VueSelect
             },
             methods: {
                 loadNext: async function() {
                     if (this.index < this.urls.length) {
-                        let url = this.urls[this.index];
+                        let url = this.urls[this.index].url;
+                        let title = this.urls[this.index].title;
                         this.index++;
-                        let response = await fetch("/balance/url_info?url=" + url);
-                        let data = await response.json();
-                        this.items.push(data);
+                        if(this.searchText === "" || title.includes(this.searchText) ){
+                            let response = await fetch("/balance/url_info?url=" + url);
+                            let data = await response.json();
+                            this.items.push(data);
+                        }
                     }
                 },
                 init: function(){
@@ -90,24 +77,13 @@
                     } while (index++ < 10);
                 },
                 scrollHandler: function(){
-                    if(this.isSearch == false){
-                        this.loadNext();
-                    }
+                    this.loadNext();
                 },
-                searchItem: function(index){
-                    this.isSearch = true;
+                searchItem: function(){
+                    console.log(this.searchText);
                     this.index = 0;
                     this.items = [];
-                    this.selected_option = this.select_options[index+1];
-
-                    if(index == -1){
-                        this.isSearch = false;
-                        this.init();
-                    }else{
-                        this.index = index;
-                        this.loadNext();
-                    }
-
+                    this.init();
                 },
                 editItem: function(event) {
                     let element = event.target;
@@ -122,7 +98,6 @@
                         let data = await response.json();
                         if (data.error !== undefined) {
                             element.textContent = '';
-                            console.log(data);
                         } else {
                             for (let i = 0; i < this.items.length; i++) {
                                 if (this.items[i].id == id) {
@@ -135,10 +110,9 @@
                 getRevenue: function(item) {
                     return item.revenue - item.price;
                 },
-                getNumberOfYears: function(item) {
+                getNumberOfMonths: function(item) {
                     if (item.price > 0) {
                         let count = item.price / item.avg_revenue;
-                        let years = count / 12;
                         if (count > 30) {
                             return ">30";
                         } else {
@@ -177,17 +151,6 @@
             },
             created: function() {
                 this.init();
-                this.select_options.push({
-                    id: -1,
-                    value: "Все данные",
-                });
-                for(let i = 0; i < this.urls.length; i++){
-                    this.select_options.push({
-                        id: i,
-                        value: this.urls[i]
-                    });
-                }
-                this.selected_option = this.select_options[0];
                 window.addEventListener('scroll', this.scrollHandler);
             },
             destroyed() {

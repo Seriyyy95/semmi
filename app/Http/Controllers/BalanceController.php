@@ -47,10 +47,16 @@ class BalanceController extends Controller
         $dbUrls = WPUrl::where("user_id", $user_id)
             ->where("site_id", $site_id)
             ->orderBy("last_modified", "DESC")
-            ->get()
-            ->pluck("url")->toArray();
+            ->get();
+        $dataUrls = array();
+        foreach ($dbUrls as $url) {
+            $dataUrls[] = array(
+                "url" => $url->url,
+                "title" => $url->title,
+            );
+        }
         return view("balance.index")
-            ->with("urls", $dbUrls)
+            ->with("urls", $dataUrls)
             ->with("sites", $loadedSites)
             ->with("site_id", $site_id);
     }
