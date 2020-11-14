@@ -7,10 +7,10 @@
         <div class="col-md-2">
             <h1>Баланс</h1>
         </div>
-        <div class="col-md-1">
+        <div class="col-md-2">
             <a href="{{route('balance.import')}}" class="btn btn-primary">Импорт</a>
         </div>
-        <div class="col-md-6">
+        <div class="col-md-5">
             <input class="form-control" v-model="searchText" @change="searchItem" />
         </div>
         <div class="col-md-3">
@@ -111,7 +111,13 @@
                     }
                 },
                 getPrice: function(item){
-                    return item.price.toFixed(2);
+                    let price = item.price
+                    if(price == null){
+                        return price;
+                    }else{
+                        return price.toFixed(2);
+                    }
+
                 },
                 getRevenue: function(item) {
                     return item.revenue - item.price;
