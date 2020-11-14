@@ -49,6 +49,7 @@ class BalanceController extends Controller
             ->orderBy("last_modified", "DESC")
             ->get();
         $dataUrls = array();
+        $dataUrls[] = array("url" => "all", "title" => "Все данные");
         foreach ($dbUrls as $url) {
             $dataUrls[] = array(
                 "url" => $url->url,
@@ -64,7 +65,7 @@ class BalanceController extends Controller
     public function urlInfo(Request $request)
     {
         $request->validate([
-            'url' => 'required|url',
+            'url' => 'required',
         ]);
         $user_id = Auth::user()->id;
         $site_id = $request->session()->get("wp_site_id", 1);
@@ -87,21 +88,37 @@ class BalanceController extends Controller
 
         $url = $request->get("url");
 
-        $urlData = WPUrl::where("url", $url)
-            ->where("user_id", $user_id)
-            ->where("site_id", $site_id)
-            ->get()->first();
-        $totalRevenue = $clickHouse->getUrlRevenue($url);
-        $avgRevenue = $clickHouse->getAvgRevenue($url);
-        $data = array(
-            "id" => $urlData->id,
-            "url" => $urlData->url,
-            "title" => $urlData->title,
-            "price" => $urlData->price,
-            "revenue" => $totalRevenue,
-            "avg_revenue" => $avgRevenue,
-        );
-
+        if ($url !== "all") {
+            $urlData = WPUrl::where("url", $url)
+                ->where("user_id", $user_id)
+                ->where("site_id", $site_id)
+                ->get()->first();
+            $totalRevenue = $clickHouse->getUrlRevenue($url);
+            $avgRevenue = $clickHouse->getAvgRevenue($url);
+            $data = array(
+                "id" => $urlData->id,
+                "url" => $urlData->url,
+                "title" => $urlData->title,
+                "price" => $urlData->price,
+                "revenue" => $totalRevenue,
+                "avg_revenue" => $avgRevenue,
+            );
+        } else {
+            $urlData = WPUrl::selectRaw("SUM(price) as price")
+                ->where("user_id", $user_id)
+                ->where("site_id", $site_id)
+                ->get()->first();
+            $totalRevenue = $clickHouse->getTotalRevenue();
+            $avgRevenue = $clickHouse->getTotalAvgRevenue();
+            $data = array(
+                "id" => "-1",
+                "url" => "Все данные",
+                "title" => "Всего",
+                "price" => $urlData->price,
+                "revenue" => $totalRevenue,
+                "avg_revenue" => $avgRevenue,
+            );
+        }
         return response()->json($data);
     }
 

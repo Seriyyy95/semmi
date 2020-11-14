@@ -90,7 +90,10 @@
                 },
                 editItem: function(event) {
                     let element = event.target;
-                    element.setAttribute("contenteditable", true);
+                    let id = element.getAttribute('data-item-id');
+                    if(id > 0){
+                        element.setAttribute("contenteditable", true);
+                    }
                 },
                 saveItem: async function(event) {
                     let element = event.target;

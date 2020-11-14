@@ -68,6 +68,31 @@ class ClickHouseViews extends ClickHouse
         }
     }
 
+    public function getTotalRevenue()
+    {
+        $query = "SELECT SUM(adsenseRevenue) as revenue FROM {$this->database}.{$this->table} WHERE site_id={$this->site_id} AND user_id={$this->user_id}";
+        $result = $this->db->select($query);
+        $data = $result->rows();
+        if (count($data) > 0 && $data[0]["revenue"] > 0) {
+            return $data[0]["revenue"];
+        } else {
+            return 0;
+        }
+    }
+
+    public function getTotalAvgRevenue()
+    {
+        $query = "SELECT AVG(revenue) as avg_revenue FROM (SELECT SUM(adsenseRevenue) as revenue FROM {$this->database}.{$this->table} WHERE site_id={$this->site_id} AND user_id={$this->user_id} GROUP BY toStartOfMonth(date) HAVING revenue > 0)";
+        $result = $this->db->select($query);
+        $data = $result->rows();
+        if (count($data) > 0 && $data[0]["avg_revenue"] > 0) {
+            return $data[0]["avg_revenue"];
+        } else {
+            return 0;
+        }
+    }
+
+
     protected function createTablesIfNotExist()
     {
         //        $this->db->write("DROP TABLE IF EXISTS {$this->database}.{$this->table}");
