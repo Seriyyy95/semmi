@@ -73,10 +73,10 @@
                         }
                     }
                 },
-                init: function(){
+                init: async function(){
                     let index = 0;
                     do {
-                        this.loadNext();
+                        await this.loadNext();
                     } while (index++ < 10);
                 },
                 scrollHandler: function(){

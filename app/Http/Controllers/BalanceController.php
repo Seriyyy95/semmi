@@ -16,7 +16,7 @@ class BalanceController extends Controller
     public function index(Request $request)
     {
         $user_id = Auth::user()->id;
-        $site_id = $request->session()->get("wp_site_id", 1);
+        $site_id = $request->session()->get("wp_site_id", $this->getDefaultSiteId($user_id));
         $optionsManager = new OptionsManager();
         $optionsManager->setUser($user_id);
         $wpConnKey = $optionsManager->getValue("wpconnector_key");
@@ -49,7 +49,9 @@ class BalanceController extends Controller
             ->orderBy("last_modified", "DESC")
             ->get();
         $dataUrls = array();
-        $dataUrls[] = array("url" => "all", "title" => "Все данные");
+        if (count($dbUrls) > 0) {
+            $dataUrls[] = array("url" => "all", "title" => "Все данные");
+        }
         foreach ($dbUrls as $url) {
             $dataUrls[] = array(
                 "url" => $url->url,
@@ -68,7 +70,7 @@ class BalanceController extends Controller
             'url' => 'required',
         ]);
         $user_id = Auth::user()->id;
-        $site_id = $request->session()->get("wp_site_id", 1);
+        $site_id = $request->session()->get("wp_site_id", $this->getDefaultSiteId($user_id));
         $siteBinding = WPBinding::where("user_id", $user_id)
             ->where("site_id", $site_id)->get()->first();
         if ($siteBinding == null) {
@@ -147,7 +149,7 @@ class BalanceController extends Controller
     public function upload(Request $request)
     {
         $user_id = Auth::user()->id;
-        $site_id = $request->session()->get("wp_site_id", 1);
+        $site_id = $request->session()->get("wp_site_id", $this->getDefaultSiteId($user_id));
 
         $file = $request->post_file;
         $fileName = "uploaded-csv-" . time() . "." . $file->getClientOriginalExtension();
@@ -178,5 +180,16 @@ class BalanceController extends Controller
         }
 
         return back()->withSuccess("Импортировано $count строк данных");
+    }
+
+    private function getDefaultSiteId($user_id)
+    {
+        $firstSite = WPUrl::select("site_id", "domain")
+            ->where("user_id", $user_id)->get()->first();
+        if ($firstSite != null) {
+            return $firstSite->id;
+        } else {
+            return 1;
+        }
     }
 }
