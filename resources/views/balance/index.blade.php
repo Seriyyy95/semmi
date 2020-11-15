@@ -126,8 +126,8 @@
                     return item.revenue - item.price;
                 },
                 getNumberOfMonths: function(item) {
-                    if (item.price > 0) {
-                        let count = item.price / item.avg_revenue;
+                    if (item.price > 0 && (item.price - item.revenue) > 0) {
+                        let count = Math.abs(item.price - item.revenue) / item.avg_revenue;
                         if (count > 30) {
                             return ">30";
                         } else {
@@ -137,6 +137,9 @@
                         return 0;
                     }
                 },
+            },
+            computed: {
+
             },
             directives: {
                 'colorize-year': {
