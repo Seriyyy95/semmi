@@ -283,7 +283,7 @@ return [
 
         ['header' => 'Другое'],
         [
-            'text' => 'Баланс',
+            'text' => 'Сводка данных',
             'url'  => 'balance',
             'icon' => 'fas fa-fw fa-user',
         ],
@@ -304,12 +304,6 @@ return [
             'url'  => 'gaaccounts',
             'icon' => 'fas fa-fw fa-puzzle-piece',
         ],
-        [
-            'text' => 'Настройка WPConnector',
-            'url'  => 'wpconnector',
-            'icon' => 'fas fa-fw fa-user',
-        ],
-
     ],
 
     /*

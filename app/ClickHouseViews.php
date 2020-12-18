@@ -92,6 +92,53 @@ class ClickHouseViews extends ClickHouse
         }
     }
 
+    public function getUrlPageviews($url)
+    {
+        $query = "SELECT url, SUM(pageviews) as pageviews FROM {$this->database}.{$this->table} WHERE url='$url' AND site_id={$this->site_id} AND user_id={$this->user_id} GROUP BY url";
+        $result = $this->db->select($query);
+        $data = $result->rows();
+        if (count($data) > 0 && $data[0]["pageviews"] > 0) {
+            return $data[0]["pageviews"];
+        } else {
+            return 0;
+        }
+    }
+
+    public function getAvgPageviews($url)
+    {
+        $query = "SELECT AVG(pageviews) as avg_pageviews FROM (SELECT SUM(pageviews) as pageviews FROM {$this->database}.{$this->table} WHERE url='$url' AND site_id={$this->site_id} AND user_id={$this->user_id} GROUP BY toStartOfMonth(date) HAVING pageviews > 0)";
+        $result = $this->db->select($query);
+        $data = $result->rows();
+        if (count($data) > 0 && $data[0]["avg_pageviews"] > 0) {
+            return $data[0]["avg_pageviews"];
+        } else {
+            return 0;
+        }
+    }
+
+    public function getTotalPageviews()
+    {
+        $query = "SELECT SUM(pageviews) as pageviews FROM {$this->database}.{$this->table} WHERE site_id={$this->site_id} AND user_id={$this->user_id}";
+        $result = $this->db->select($query);
+        $data = $result->rows();
+        if (count($data) > 0 && $data[0]["pageviews"] > 0) {
+            return $data[0]["pageviews"];
+        } else {
+            return 0;
+        }
+    }
+
+    public function getTotalAvgPageviews()
+    {
+        $query = "SELECT AVG(pageviews) as avg_pageviews FROM (SELECT SUM(pageviews) as pageviews FROM {$this->database}.{$this->table} WHERE site_id={$this->site_id} AND user_id={$this->user_id} GROUP BY toStartOfMonth(date) HAVING pageviews > 0)";
+        $result = $this->db->select($query);
+        $data = $result->rows();
+        if (count($data) > 0 && $data[0]["pageviews"] > 0) {
+            return $data[0]["pageviews"];
+        } else {
+            return 0;
+        }
+    }
 
     protected function createTablesIfNotExist()
     {

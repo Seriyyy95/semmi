@@ -321,20 +321,6 @@ class StatsController extends Controller
         return back();
     }
 
-    public function selectWpSite(Request $request)
-    {
-        $site_id = $request->get("site_id");
-
-        /*        if ($gaSite == null) {
-                    return back()->withFail("Сайт $site_id не найден!");
-                }*/
-        $request->session()->forget('search_url');
-        $request->session()->put('wp_site_id', $site_id);
-        return back();
-    }
-
-
-
     private function getPeriods($start_date, $end_date, $interval="month", $all=false)
     {
         if ($start_date == "0000-00-00") {

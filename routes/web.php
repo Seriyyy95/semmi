@@ -44,13 +44,6 @@ Route::get('gaaccounts/{id}/delete', "GaAccountsController@delete")->name("gaacc
 Route::get('gaaccounts/{id}/status', "GaAccountsController@status")->name("gaaccounts.status");
 Route::get('gaaccounts/{id}/stop', "GaAccountsController@stop")->name("gaaccounts.stop");
 
-Route::get('wpconnector', "WPConnectorController@index")->name("wpconnector.index");
-Route::post('wpconnector/save', "WPConnectorController@save")->name("wpconnector.save");
-Route::post('wpconnector/bind', "WPConnectorController@bind")->name("wpconnector.bind");
-Route::get('wpconnector/update', "WPConnectorController@update")->name("wpconnector.update");
-Route::post('wpconnector/save_price', "WPConnectorController@savePrice")->name("wpconnector.savePrice");
-Route::get('wpconnector/status', "WPConnectorController@status")->name("wpconnector.status");
-
 Route::get("stats/positions", "StatsController@positions")->name("stats.positions");
 Route::get("stats/clicks", "StatsController@clicks")->name("stats.clicks");
 Route::get("stats/impressions", "StatsController@impressions")->name("stats.impressions");
@@ -60,7 +53,6 @@ Route::get("stats/revenue", "StatsController@revenue")->name("stats.revenue");
 Route::get("stats/organic_searches", "StatsController@organicSearches")->name("stats.organic_searches");
 Route::get("stats/select_gsc", "StatsController@selectGscSite")->name("stats.select_gsc_site");
 Route::get("stats/select_ga", "StatsController@selectGaSite")->name("stats.select_ga_site");
-Route::get("stats/select_wp", "StatsController@selectWpSite")->name("stats.select_wp_site");
 Route::get("stats/get_url_history", "StatsController@getUrlHistory")->name("stats.get_url_history");
 Route::get("stats/get_url_calendar", "StatsController@getUrlCalendar")->name("stats.get_url_calendar");
 
@@ -70,6 +62,3 @@ Route::get("changes/keywords", "ChangesController@keywords")->name("changes.keyw
 
 Route::get("balance", "BalanceController@index")->name("balance.index");
 Route::get("balance/url_info", "BalanceController@urlInfo")->name("balance.url_info");
-Route::get("balance/update_item", "BalanceController@updateItem")->name("balance.update_item");
-Route::get("balance/import", "BalanceController@import")->name("balance.import");
-Route::post("balance/upload", "BalanceController@upload")->name("balance.upload");
