@@ -24,9 +24,8 @@
     <div id="app">
            <table class="table table-stripped" v-on:scroll="loadNext">
                 <thead class="thead-dark">
-                    <th>Ссылка</th>
                     <th>Заголовок</th>
-                    <th>Потрачено, USD</th>
+                    <th>Реальные затраты, USD</th>
                     <th>Заработано, USD</th>
                     <th>Разница, USD</th>
                     <th>В месяц, USD</th>
@@ -34,8 +33,7 @@
                 </thead>
                 <tbody>
                     <tr v-for="item in items">
-                        <td v-text="item.url"></td>
-                        <td v-text="item.title"></td>
+                        <td> <a v-bind:href="item.url" v-text="item.title"></a></td>
                         <td v-text="getPrice(item)" :data-item-id="item.id" @click="editItem" @blur="saveItem"></td>
                         <td v-colorize-revenue v-text="parseFloat(item.revenue).toFixed(2)"></td>
                         <td v-colorize-revenue v-text="getRevenue(item).toFixed(2)"></td>
@@ -77,10 +75,10 @@
                     let index = 0;
                     do {
                         await this.loadNext();
-                    } while (index++ < 10);
+                    } while (index++ < this.urls.length);
                 },
                 scrollHandler: function(){
-                    this.loadNext();
+                    //this.loadNext();
                 },
                 searchItem: function(){
                     console.log(this.searchText);
@@ -122,14 +120,24 @@
                     }
 
                 },
+                getCalcPrice: function(item){
+                    let price = item.post_length * this.price / 1000;
+                    if(price == null){
+                        return price;
+                    }else{
+                        return price.toFixed(2);
+                    }
+
+                },
+
                 getRevenue: function(item) {
                     return item.revenue - item.price;
                 },
                 getNumberOfMonths: function(item) {
                     if (item.price > 0 && (item.price - item.revenue) > 0) {
                         let count = Math.abs(item.price - item.revenue) / item.avg_revenue;
-                        if (count > 30) {
-                            return ">30";
+                        if (count > 48) {
+                            return ">48";
                         } else {
                             return count.toFixed(0);
                         }

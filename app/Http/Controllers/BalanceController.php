@@ -10,6 +10,7 @@ use App\ClickHouseViews;
 use App\OptionsManager;
 use App\WPBinding;
 use App\WPUrl;
+use App\WpSite;
 
 class BalanceController extends Controller
 {
@@ -27,23 +28,7 @@ class BalanceController extends Controller
         $wpConnector = new WPConnector();
         $wpConnector->setDomain($wpConnUrl);
         $wpConnector->setApiKey($wpConnKey);
-        $sites = $wpConnector->sites();
-        $loadedSites = WPUrl::select("site_id", "domain")
-            ->where("user_id", $user_id)
-            ->groupBy("domain", "site_id")->get();
-        $sitesArray = array();
-        foreach ($sites as $id=>$domain) {
-            $sitesArray[] = new class($id, $domain) {
-                public $id;
-                public $domain;
-
-                public function __construct($id, $domain)
-                {
-                    $this->id = $id;
-                    $this->domain = $domain;
-                }
-            };
-        }
+        $wpSites = WpSite::where("user_id", $user_id)->get();
         $dbUrls = WPUrl::where("user_id", $user_id)
             ->where("site_id", $site_id)
             ->orderBy("last_modified", "DESC")
@@ -60,7 +45,7 @@ class BalanceController extends Controller
         }
         return view("balance.index")
             ->with("urls", $dataUrls)
-            ->with("sites", $loadedSites)
+            ->with("sites", $wpSites)
             ->with("site_id", $site_id);
     }
 
@@ -71,19 +56,11 @@ class BalanceController extends Controller
         ]);
         $user_id = Auth::user()->id;
         $site_id = $request->session()->get("wp_site_id", $this->getDefaultSiteId($user_id));
-        $siteBinding = WPBinding::where("user_id", $user_id)
-            ->where("site_id", $site_id)->get()->first();
-        if ($siteBinding == null) {
-            return response()->json(array("error" => "Google Analytics profile not binded!"));
+        $wpSite = WpSite::find($site_id);
+        if ($wpSite == null) {
+            return response()->json(array("error" => "Wordpress site not found!"));
         }
-        $ga_site_id = $siteBinding["ga_site"];
-        $optionsManager = new OptionsManager();
-        $optionsManager->setUser($user_id);
-        $wpConnKey = $optionsManager->getValue("wpconnector_key");
-        $wpConnUrl = env("WP_CONNECTOR_URL");
-        if ($wpConnKey == null || $wpConnUrl == null) {
-            return response()->json(array("error" => "WPConnector is not configured!"));
-        }
+        $ga_site_id = $wpSite->ga_site_id;
         $clickHouse = ClickHouseViews::getInstance();
         $clickHouse->setUser($user_id);
         $clickHouse->setSite($ga_site_id);
@@ -102,11 +79,12 @@ class BalanceController extends Controller
                 "url" => $urlData->url,
                 "title" => $urlData->title,
                 "price" => $urlData->price,
+                "post_length" => $urlData->post_length,
                 "revenue" => $totalRevenue,
                 "avg_revenue" => $avgRevenue,
             );
         } else {
-            $urlData = WPUrl::selectRaw("SUM(price) as price")
+            $urlData = WPUrl::selectRaw("SUM(price) as price, SUM(post_length) as length")
                 ->where("user_id", $user_id)
                 ->where("site_id", $site_id)
                 ->get()->first();
@@ -117,6 +95,7 @@ class BalanceController extends Controller
                 "url" => "Все данные",
                 "title" => "Всего",
                 "price" => $urlData->price,
+                "post_length" => $urlData->length,
                 "revenue" => $totalRevenue,
                 "avg_revenue" => $avgRevenue,
             );
@@ -136,6 +115,7 @@ class BalanceController extends Controller
         if ($wpUrl == null) {
             return response()->json(array("error" => "Can not find url with id $url_id"));
         }
+        $wpUrl->manually = 1;
         $wpUrl->price = $price;
         $wpUrl->save();
         return response()->json(array("success" => true));
@@ -173,6 +153,7 @@ class BalanceController extends Controller
                     ->get()->first();
                 if ($wpUrl !== null) {
                     $count++;
+                    $wpUrl->manually = 1;
                     $wpUrl->price = round($price, 2);
                     $wpUrl->save();
                 }
@@ -184,8 +165,7 @@ class BalanceController extends Controller
 
     private function getDefaultSiteId($user_id)
     {
-        $firstSite = WPUrl::select("site_id", "domain")
-            ->where("user_id", $user_id)->get()->first();
+        $firstSite = WPUrl::where("user_id", $user_id)->get()->first();
         if ($firstSite != null) {
             return $firstSite->id;
         } else {

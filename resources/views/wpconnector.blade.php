@@ -21,22 +21,25 @@
         <thead>
             <tr>
                 <th>Сайт</th>
+                <th>Загружено ссылок</th>
                 <th>Профиль Google Analytics</th>
+                <th>Цена</th>
                 <th>Действия</th>
             </tr>
         </thead>
         <tbody>
-            @foreach($sites as $site_id=>$site)
+            @foreach($sites as $site)
                 <tr>
-                    <td>{{$site}}</td>
+                    <td>{{$site->domain}}</td>
+                    <td>{{$site->count}}</td>
                     <td>
                         <form action="{{route('wpconnector.bind')}}" method="POST">
                             @csrf
-                            <input type="hidden" name="site_id" value="{{$site_id}}" />
+                            <input type="hidden" name="site_id" value="{{$site->id}}" />
                             <select name="ga_site" class="form-control site-select">
                                 <option value="0" disabled selected>Не выбрано</option>
                                 @foreach($gaSites as $gSite)
-                                    @if(isset($bindings[$site_id]) && $bindings[$site_id] == $gSite->id)
+                                    @if($site->ga_site_id == $gSite->id)
                                         <option value="{{$gSite->id}}" selected>{{$gSite->domain}} ({{$gSite->profile_name}})</option>
                                     @else
                                         <option value="{{$gSite->id}}">{{$gSite->domain}} ({{$gSite->profile_name}})</option>
@@ -46,7 +49,29 @@
                         </form>
                     </td>
                     <td>
-                        <a href="{{route('wpconnector.update', array('site_id' => $site_id))}}" class="btn btn-warning">Обновить</a>
+                        <form action="{{route('wpconnector.savePrice')}}" method="POST">
+                            @csrf
+                            <input type="hidden" name="site_id" value="{{$site->id}}" />
+                            <input type="text" name="price" value="{{$site->price}}" class="form-control price-input" />
+                       </form>
+
+                    </td>
+                    <td>
+                        @if($site->hasActiveTasks())
+                            <div data-button-id="{{$site->id}}" style="display:none">
+                                <a href="{{route('wpconnector.update', array('site_id' => $site->id))}}" class="btn btn-warning">Обновить</a>
+                            </div>
+                            <div class="wp-loader" data-site-id="{{$site->id}}" data-status="progress">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        @else
+                            <div data-button-id="{{$site->id}}" >
+                                <a href="{{route('wpconnector.update', array('site_id' => $site->id))}}" class="btn btn-warning">Обновить</a>
+                            </div>
+                            <div class="wp-loader" data-site-id="{{$site->id}}" data-status="finished" style="display:none">
+                                <i class="fa fa-spinner fa-spin"></i>
+                            </div>
+                        @endif
                     </td>
                 </tr>
             @endforeach
@@ -61,6 +86,31 @@
             $(".site-select").change(function(){
                 $(this).closest("form").submit();
             });
-        },true)
+        },true);
+        document.addEventListener("DOMContentLoaded", function(){
+            $(".price-input").change(function(){
+                $(this).closest("form").submit();
+            });
+        },true);
+        document.addEventListener("DOMContentLoaded", function(){
+            setInterval(function(){
+                $(".wp-loader").each(async function(index,element){
+                    let site_id = $(element).data("site-id");
+                    let status = $(element).attr("data-status");
+                    let response = await fetch("/wpconnector/status?site_id="+site_id);
+                    let data = await response.json();
+                    if(data.status == "progress" && status == "finished"){
+                        $('div[data-button-id='+site_id+']').css('display', 'none');
+                        $(element).css('display', 'block');
+                        $(element).attr("data-status", "progress");
+                    }else if(data.status == "finished" && status == "progress"){
+                        $('div[data-button-id='+site_id+']').css('display', 'block');
+                        $(element).css('display', 'none');
+                        $(element).attr("data-status", "finished");
+                    }
+                });
+            }, 2000);
+        },true);
+
     </script>
 @endsection

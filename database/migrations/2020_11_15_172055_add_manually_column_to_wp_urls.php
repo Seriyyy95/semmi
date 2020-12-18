@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateTableWPBindings extends Migration
+class AddManuallyColumnToWpUrls extends Migration
 {
     /**
      * Run the migrations.
@@ -13,13 +13,11 @@ class CreateTableWPBindings extends Migration
      */
     public function up()
     {
-        Schema::create('w_p_bindings', function (Blueprint $table) {
-            $table->id();
-            $table->integer("user_id");
-            $table->integer("site_id");
-            $table->integer("ga_site");
-            $table->timestamps();
-        });
+        if (!Schema::hasColumn('w_p_urls', 'manually')) {
+            Schema::table('w_p_urls', function (Blueprint $table) {
+                $table->integer("manually")->default(0);
+            });
+        }
     }
 
     /**
@@ -29,6 +27,8 @@ class CreateTableWPBindings extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('w_p_bindings');
+        Schema::table('wp_bindings', function (Blueprint $table) {
+            //
+        });
     }
 }

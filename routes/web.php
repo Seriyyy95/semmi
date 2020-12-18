@@ -48,6 +48,8 @@ Route::get('wpconnector', "WPConnectorController@index")->name("wpconnector.inde
 Route::post('wpconnector/save', "WPConnectorController@save")->name("wpconnector.save");
 Route::post('wpconnector/bind', "WPConnectorController@bind")->name("wpconnector.bind");
 Route::get('wpconnector/update', "WPConnectorController@update")->name("wpconnector.update");
+Route::post('wpconnector/save_price', "WPConnectorController@savePrice")->name("wpconnector.savePrice");
+Route::get('wpconnector/status', "WPConnectorController@status")->name("wpconnector.status");
 
 Route::get("stats/positions", "StatsController@positions")->name("stats.positions");
 Route::get("stats/clicks", "StatsController@clicks")->name("stats.clicks");

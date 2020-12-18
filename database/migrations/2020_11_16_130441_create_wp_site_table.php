@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateWPUrlsTable extends Migration
+class CreateWpSiteTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,17 +13,14 @@ class CreateWPUrlsTable extends Migration
      */
     public function up()
     {
-        Schema::create('w_p_urls', function (Blueprint $table) {
+        Schema::create('wp_sites', function (Blueprint $table) {
             $table->id();
             $table->integer("user_id");
             $table->integer("site_id");
+            $table->integer("ga_site_id")->nullable();
+            $table->integer("count")->default(0);
             $table->string("domain");
-            $table->string("title");
-            $table->string("url");
-            $table->datetime("publish_date");
-            $table->datetime("last_modified");
-            $table->string("status")->default("finished");
-            $table->float("price")->nullable();
+            $table->float("price")->default(0);
             $table->timestamps();
         });
     }
@@ -35,6 +32,6 @@ class CreateWPUrlsTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('w_p_urls');
+        Schema::dropIfExists('wp_sites');
     }
 }
