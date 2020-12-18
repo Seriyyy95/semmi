@@ -23,6 +23,7 @@
            <table class="table table-stripped" v-on:scroll="loadNext">
                 <thead class="thead-dark">
                     <th>Заголовок</th>
+                    <th>Дата публикации</th>
                     <th>Доход, USD</th>
                     <th>Просмотры</th>
                     <th>Доход в месяц</th>
@@ -31,6 +32,7 @@
                 <tbody>
                     <tr v-for="item in items">
                         <td v-text="item.url"></td>
+                        <td v-text="item.first_date"></td>
                         <td v-colorize-revenue v-text="parseFloat(item.revenue).toFixed(2)"></td>
                         <td v-colorize-revenue v-text="parseFloat(item.pageviews).toFixed(0)"></td>
                         <td v-colorize-pageviews v-text="parseFloat(item.avg_revenue).toFixed(2)">0</td>

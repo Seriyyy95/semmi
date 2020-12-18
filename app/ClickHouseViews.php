@@ -28,6 +28,17 @@ class ClickHouseViews extends ClickHouse
         return $result->rows();
     }
 
+    public function getFirstUrlDate($url)
+    {
+        $query = "SELECT MIN(date) as date FROM {$this->database}.{$this->table} WHERE url='$url' AND site_id={$this->site_id} AND user_id={$this->user_id}";
+        $result = $this->db->select($query);
+        $data = $result->rows();
+        if (count($data) > 0 && $data[0]["date"] > 0) {
+            return $data[0]["date"];
+        } else {
+            return 0;
+        }
+    }
 
     public function getHistoryData($periods, $url, $field = "pageviews", $function = "sum")
     {

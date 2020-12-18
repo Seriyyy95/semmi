@@ -47,6 +47,7 @@ class BalanceController extends Controller
             $avgRevenue = $clickHouse->getAvgRevenue($url);
             $totalPageviews = $clickHouse->getUrlPageviews($url);
             $avgPageviews = $clickHouse->getAvgPageviews($url);
+            $firstDate = $clickHouse->getFirstUrlDate($url);
 
             $data = array(
                 "url" => $url,
@@ -54,6 +55,7 @@ class BalanceController extends Controller
                 "avg_revenue" => $avgRevenue,
                 "pageviews" => $totalPageviews,
                 "avg_pageviews" => $avgPageviews,
+                "first_date" => $firstDate,
             );
         } else {
             $totalRevenue = $clickHouse->getTotalRevenue();
