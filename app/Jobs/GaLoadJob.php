@@ -69,20 +69,20 @@ class GaLoadJob implements ShouldQueue
 
     public function updateParsent($gscSite)
     {
-        $active = GaTask::where("user_id", $gscSite->user_id)
+        $finalized = GaTask::where("user_id", $gscSite->user_id)
             ->where("site_id", $gscSite->id)
             ->where("status", "!=", "active")
             ->where("status", "!=", "disabled")
             ->where("id", ">", $gscSite->last_task_id)
             ->count();
-        \Log::info("active: $active");
+        \Log::info("Finalized: $finalized");
         $max = GaTask::selectRaw("MAX(id) as id")
             ->where("user_id", $gscSite->user_id)
             ->where("site_id", $gscSite->id)
             ->first()->id;
         $total = $max - $gscSite->last_task_id;
         \Log::info("total: $total");
-        $gscSite->parsent = $active * 100 / $total;
+        $gscSite->parsent = $finalized * 100 / $total;
         $gscSite->save();
     }
 

@@ -212,8 +212,8 @@ class ChangesController extends Controller
             $maxDate->modify("-30 days");
             $sStartDate = $maxDate->format("Y-m-d");
             return array(
+                array("startDate" => $sStartDate, "endDate" => $sEndDate),
                 array("startDate" => $fStartDate, "endDate" => $fEndDate),
-                array("startDate" => $sStartDate, "endDate" => $sEndDate)
             );
         } elseif (($maxDate->diff($minDate)->format("%a")) > 14) {
             $fEndDate = $maxDate->format("Y-m-d");
@@ -223,8 +223,8 @@ class ChangesController extends Controller
             $maxDate->modify("-7 days");
             $sStartDate = $maxDate->format("Y-m-d");
             return array(
+                array("startDate" => $sStartDate, "endDate" => $sEndDate),
                 array("startDate" => $fStartDate, "endDate" => $fEndDate),
-                array("startDate" => $sStartDate, "endDate" => $sEndDate)
             );
         } else {
             $nowDate = (new DateTime)->format("Y-m-d");

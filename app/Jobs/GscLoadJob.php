@@ -115,14 +115,31 @@ class GscLoadJob implements ShouldQueue
     {
         $scheme = parse_url($url);
         $url = $scheme["scheme"] . "://" . $scheme["host"] . $scheme["path"];
+        if (strpos($url, "/?s=")) {
+            $url = $scheme["host"] . "://search";
+        } elseif (strpos($url, ".jpg") || strpos($url, ".jpeg") || strpos($url, ".png") || strpos($url, ".gif")) {
+            $url = $scheme["host"] . "://attachment";
+        } elseif (strpos($url, " ")) {
+            $url = substr($url, 0, strpos($url, " "));
+        }
         $url = rtrim($url, "/");
-        $url = rtrim($url, "amp/");
-        $url = rtrim($url, "amp");
+        if ($this->endsWith($url, "amp")) {
+            $url = rtrim($url, "amp");
+        }
         return $url;
     }
 
     public function clearKeyword($keyword)
     {
         return mb_strtolower(preg_replace("/[^,\-\s\d\p{Cyrillic}\p{Latin}]/ui", '', $keyword));
+    }
+
+    private function endsWith($haystack, $needle)
+    {
+        $length = strlen($needle);
+        if (!$length) {
+            return true;
+        }
+        return substr($haystack, -$length) === $needle;
     }
 }
