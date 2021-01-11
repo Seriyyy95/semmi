@@ -134,7 +134,7 @@
                     <tbody>
                         @foreach($grownData as $row)
                         <tr>
-                            <td style="word-wrap: break-word;"><a href="{{route('page.index', array("url" => $row["url"]))}}">{{$row["url"]}}</a></td>
+                            <td style="word-break: break-word;"><a href="{{route('page.index', array("url" => $row["url"]))}}">{{$row["url"]}}</a></td>
                             <td>{{$row["data"]}}</td>
                             <td>{{$row["previous_data"]}}</td>
                             <td style="color:green">+{{$row["result"]}}</td>
@@ -165,7 +165,7 @@
                     <tbody>
                         @foreach($downData as $row)
                         <tr>
-                            <td>{{$row["url"]}}</td>
+                            <td style="word-break: break-word;"><a href="{{route('page.index', array("url" => $row["url"]))}}">{{$row["url"]}}</a></td>
                             <td>{{$row["data"]}}</td>
                             <td>{{$row["previous_data"]}}</td>
                             <td style="color:red">{{$row["result"]}}</td>
@@ -199,7 +199,7 @@
                     <tbody>
                         @foreach($stableData as $row)
                         <tr>
-                            <td>{{$row["url"]}}</td>
+                            <td style="word-break: break-word;"><a href="{{route('page.index', array("url" => $row["url"]))}}">{{$row["url"]}}</a></td>
                             <td>{{$row["data"]}}</td>
                             <td>{{$row["previous_data"]}}</td>
                             <td>{{$row["result"]}}</td>
