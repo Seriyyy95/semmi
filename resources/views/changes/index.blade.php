@@ -61,7 +61,7 @@
     </div>
     <!-- /.modal-dialog -->
 </div>
-<table class="table table-striped">
+<table class="table table-striped" style="width: 400px">
     <thead class="thead-dark">
         <th>Показатель</th>
         <th>Значение</th>
@@ -134,7 +134,7 @@
                     <tbody>
                         @foreach($grownData as $row)
                         <tr>
-                            <td>{{$row["url"]}}</td>
+                            <td style="word-wrap: break-word;"><a href="{{route('page.index', array("url" => $row["url"]))}}">{{$row["url"]}}</a></td>
                             <td>{{$row["data"]}}</td>
                             <td>{{$row["previous_data"]}}</td>
                             <td style="color:green">+{{$row["result"]}}</td>

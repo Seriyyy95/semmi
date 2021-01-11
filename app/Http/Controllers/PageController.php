@@ -29,13 +29,14 @@ class PageController extends Controller
         $periods = $this->getPeriods($minDate, $maxDate, "month", true);
         $periodsMetadata = $this->getPeriodsMetadata($periods);
         $urls = $clickHouse->getUrls($periods);
+
         return view("page.index")
             ->with("periods", $periods)
             ->with("periodsMetadata", $periodsMetadata)
             ->with("urls", $urls)
             ->with("site_id", $site_id)
             ->with("sites", $sites)
-            ->with("invertColor", false);
+            ->with("startUrl", $request->get("url", ""));
     }
 
     public function keywordGraph(Request $request)

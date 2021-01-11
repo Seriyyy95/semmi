@@ -116,6 +116,7 @@
                     urls: {!!json_encode($urls) !!},
                     periodsMetadata: {!! json_encode($periodsMetadata) !!},
                     periods: {!! count($periods) !!},
+                    startUrl: "{!! $startUrl !!}",
                     months: ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"],
                     select_options: [],
                     selected_option: null,
@@ -149,6 +150,8 @@
             },
             methods: {
                 loadPageviews: async function() {
+                    console.log(this.searchedUrl);
+                    console.log("/page/get_url_calendar?url=" + this.searchedUrl + "&field=pageviews&agg_function=sum");
                     let response = await fetch("/page/get_url_calendar?url=" + this.searchedUrl + "&field=pageviews&agg_function=sum");
                     let data = await response.json();
                     let startYear = this.periodsMetadata["firstYear"];
@@ -284,8 +287,18 @@
                     });
                 }
                 if(this.select_options.length > 0){
-                    this.selected_option = this.select_options[0];
-                    this.searchedUrl = this.selected_option.value;
+                    if(this.startUrl.length > 0){
+                        for(index in this.select_options) {
+                            if(this.select_options[index].value == this.startUrl){
+                                this.selected_option = this.select_options[index];
+                                this.searchedUrl = this.select_options[index].value;
+                            }
+                        }
+                    }
+                    if(this.selected_option == null){
+                        this.selected_option = this.select_options[0];
+                        this.searchedUrl = this.selected_option.value;
+                    }
                     this.loadData();
                 }
 
