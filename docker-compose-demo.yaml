@@ -1,0 +1,60 @@
+version: '3.5'
+
+networks:
+  docker-network:
+volumes:
+  db-data:
+  db-clickhouse:
+
+services:
+  main-app:
+    restart: always
+    build:
+      context: ./docker/main-app
+    volumes:
+      - ./:/var/www
+      - ./docker/php-fpm/timezone.ini:/usr/local/etc/php/conf.d/timezone.ini
+    networks:
+      - docker-network
+    depends_on:
+      - docker-mariadb
+  docker-nginx:
+    restart: always
+    image: nginx
+    ports:
+      - "8885:80"
+    volumes:
+      - ./:/var/www
+      - ./docker/nginx/conf.d/:/etc/nginx/conf.d
+    networks:
+      - docker-network
+  docker-php-fpm:
+    restart: always
+    build:
+      context: ./docker/php-fpm
+    volumes:
+      - ./:/var/www
+      - ./docker/php-fpm/timezone.ini:/usr/local/etc/php/conf.d/timezone.ini
+    networks:
+      - docker-network
+  docker-mariadb:
+    restart: always
+    image: mariadb
+    env_file:
+      - ./.db.env
+    volumes:
+      - db-data:/var/lib/mysql
+    networks:
+      - docker-network
+  docker-clickhouse:
+    restart: always
+    image: yandex/clickhouse-server:latest
+    ulimits:
+        nofile:
+                soft: 262144
+                hard: 262144
+    volumes:
+      - db-clickhouse:/var/lib/clickhouse
+    networks:
+      - docker-network
+
