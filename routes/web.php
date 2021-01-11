@@ -15,7 +15,7 @@ use App\User;
 |
 */
 
-Auth::routes();
+Auth::routes(['register' => false]);
 
 Route::get('/', function () {
     $usersCount = User::count();
@@ -28,7 +28,8 @@ Route::get('/', function () {
 
 Route::get('/install', 'InstallController@index')->name("installer.index");
 Route::post('/install', 'InstallController@install')->name("installer.install");
-Route::get('/home', 'GscAccountsController@index')->name('home')->middleware('auth');
+Route::get('/home', 'PageController@index')->name('home')->middleware('auth');
+
 Route::get('gscsettings', "GscSettingsController@index")->name("gscsettings.index");
 Route::post('gscsettingsapply', "GscSettingsController@apply")->name("gscsettings.apply");
 
@@ -44,21 +45,18 @@ Route::get('gaaccounts/{id}/delete', "GaAccountsController@delete")->name("gaacc
 Route::get('gaaccounts/{id}/status', "GaAccountsController@status")->name("gaaccounts.status");
 Route::get('gaaccounts/{id}/stop', "GaAccountsController@stop")->name("gaaccounts.stop");
 
-Route::get("stats/positions", "StatsController@positions")->name("stats.positions");
-Route::get("stats/clicks", "StatsController@clicks")->name("stats.clicks");
-Route::get("stats/impressions", "StatsController@impressions")->name("stats.impressions");
-Route::get("stats/ctr", "StatsController@ctr")->name("stats.ctr");
-Route::get("stats/pageviews", "StatsController@pageviews")->name("stats.pageviews");
-Route::get("stats/revenue", "StatsController@revenue")->name("stats.revenue");
-Route::get("stats/organic_searches", "StatsController@organicSearches")->name("stats.organic_searches");
-Route::get("stats/select_gsc", "StatsController@selectGscSite")->name("stats.select_gsc_site");
-Route::get("stats/select_ga", "StatsController@selectGaSite")->name("stats.select_ga_site");
-Route::get("stats/get_url_history", "StatsController@getUrlHistory")->name("stats.get_url_history");
-Route::get("stats/get_url_calendar", "StatsController@getUrlCalendar")->name("stats.get_url_calendar");
+Route::get('/logs/{source}', 'LogsController@index')->name("logs.index");
 
-Route::get("changes/impressions", "ChangesController@impressions")->name("changes.impressions");
-Route::get("changes/clicks", "ChangesController@clicks")->name("changes.clicks");
+Route::get("page", "PageController@index")->name("page.index");
+Route::get("page/get_url_calendar", "PageController@getUrlCalendar")->name("page.calendar");
+Route::get("page/get_url_keywords", "PageController@getUrlKeywords")->name("page.keywords");
+Route::get("page/get_url_graph", "PageController@getUrlGraph")->name("page.graph");
+Route::get("page/keyword_graph", "PageController@keywordGraph")->name("page.keyword_graph");
+
+Route::get("stats/select_ga", "StatsController@selectGaSite")->name("stats.select_ga_site");
+
+Route::get("changes", "ChangesController@index")->name("changes.index");
 Route::get("changes/keywords", "ChangesController@keywords")->name("changes.keywords");
 
-Route::get("balance", "BalanceController@index")->name("balance.index");
-Route::get("balance/url_info", "BalanceController@urlInfo")->name("balance.url_info");
+Route::get("request", "RequestController@index")->name("request.index");
+Route::get("request/execute", "RequestController@execute")->name("request.execute");

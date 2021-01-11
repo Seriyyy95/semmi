@@ -7,11 +7,13 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+
 use App\GscTask;
 use App\GoogleGscSite;
 use App\OptionsManager;
 use App\GoogleDataLoader;
 use App\ClickHousePositions;
+use App\LoadLogger;
 
 class GscLoadJob implements ShouldQueue
 {
@@ -20,6 +22,7 @@ class GscLoadJob implements ShouldQueue
     public $tries = 10;
     public $timout = 0;
     public $gscTask;
+    private $loadLogger;
 
     /**
      * Create a new job instance.
@@ -38,6 +41,14 @@ class GscLoadJob implements ShouldQueue
      */
     public function handle()
     {
+        $date = $this->gscTask->date;
+        $user_id = $this->gscTask->user_id;
+        $site_id = $this->gscTask->site_id;
+        $currentRow = $this->gscTask->offset;
+        $gscSite = GoogleGscSite::findOrFail($this->gscTask->site_id);
+
+        $this->loadLogger = new LoadLogger($user_id, "gsc");
+
         if ($this->gscTask->status != "disabled") {
             $date = $this->gscTask->date;
             $user_id = $this->gscTask->user_id;
@@ -54,7 +65,6 @@ class GscLoadJob implements ShouldQueue
             $clickHouse->setUser($user_id);
             $clickHouse->setSite($site_id);
 
-            $gscSite = GoogleGscSite::findOrFail($this->gscTask->site_id);
 
             do {
                 $results = $gloader->getAPI()->getGSCData($gscSite->domain, $date, $currentRow);
@@ -79,34 +89,45 @@ class GscLoadJob implements ShouldQueue
                 $this->gscTask->offset = $currentRow;
                 $this->gscTask->save();
             } while ($count >= 4999);
+
             $this->gscTask->status = "finished";
             $this->gscTask->save();
-            $this->updateParsent($gscSite);
+            $stats = $this->updateParsent($gscSite);
+
+            $this->loadLogger->write("Загрузка данных сайта {$gscSite->domain} для даты {$this->gscTask->date} завершена");
+            $this->loadLogger->write("Всего задач в очереди: {$stats['total']}, завершено: {$stats['finalized']}, процент: {$stats['parsent']}");
+        } else {
+            $this->loadLogger->write("Загрузка данных сайта {$gscSite->domain} для даты " . $this->gscTask->date . " пропущена");
         }
     }
 
     public function updateParsent($gscSite)
     {
-        $active = GscTask::where("user_id", $gscSite->user_id)
+        $finalized = GscTask::where("user_id", $gscSite->user_id)
             ->where("site_id", $gscSite->id)
             ->where("status", "!=", "active")
             ->where("status", "!=", "disabled")
             ->where("id", ">", $gscSite->last_task_id)
             ->count();
-        \Log::info("active: $active");
         $max = GscTask::selectRaw("MAX(id) as id")
             ->where("user_id", $gscSite->user_id)
             ->where("site_id", $gscSite->id)
             ->first()->id;
         $total = $max - $gscSite->last_task_id;
-        \Log::info("total: $total");
-        $gscSite->parsent = $active * 100 / $total;
+        $gscSite->parsent = $finalized * 100 / $total;
         $gscSite->save();
+
+        return array(
+            "total" => $total,
+            "finalized" => $finalized,
+            "parsent" => round($gscSite->parsent, 2),
+        );
     }
 
 
-    public function failed()
+    public function failed(\Exception $e)
     {
+        $this->loadLogger->write("При выполнении задачи {$this->gaTask->id} произошла ошибка: " . $e->getMessage());
         $this->gscTask->status = "failed";
         $this->gscTask->save();
     }

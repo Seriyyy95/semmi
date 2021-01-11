@@ -12,6 +12,7 @@ use App\GoogleAPI;
 use App\ClickHouseViews;
 use App\GoogleAnalyticsSite;
 use App\GATask;
+use App\LoadLogger;
 use App\Jobs\GaLoadJob;
 
 class GaAccountsController extends Controller
@@ -69,6 +70,8 @@ class GaAccountsController extends Controller
         $site = GoogleAnalyticsSite::findOrFail($id);
         $user = Auth::user();
 
+        $logger = new LoadLogger($user->id, "ga");
+
         $lastElement = GATask::selectRaw("MAX(date) as date")
             ->where("user_id", $user->id)
             ->where("site_id", $site->id)
@@ -83,8 +86,10 @@ class GaAccountsController extends Controller
         $count = 0;
         if ($request->has("last_task_id") && $request->get("last_task_id") > 0) {
             $lastTaskId = $request->get("last_task_id");
+            $logger->write("В задание $lastTaskId добавлено " . count($dates) . " дат");
         } else {
             $lastTaskId = null;
+            $logger->write("Новое задание создано, добавлено " . count($dates) . " дат");
         }
 
         if (count($dates) > 0) {
@@ -105,6 +110,9 @@ class GaAccountsController extends Controller
             $site->last_task_id = $lastTaskId;
             $site->parsent = 0;
             $site->save();
+        }
+        if ($count == 0) {
+            Session::flash("Новые даты добавлены в очередь на загрузку!");
         }
         return response()->json(array(
             "last_task_id" => $lastTaskId,

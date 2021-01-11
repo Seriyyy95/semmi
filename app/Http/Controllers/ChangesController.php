@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\GoogleGscSite;
+use App\GoogleAnalyticsSite;
 use App\ClickHousePositions;
+use App\ClickHouseViews;
 use DateTime;
 
 class ChangesController extends Controller
@@ -15,18 +17,82 @@ class ChangesController extends Controller
         $this->middleware("auth");
     }
 
-    public function impressions(Request $request)
+    public function index(Request $request)
     {
-        $response = $this->changes($request, "impressions");
-        return $response->with("title", "Изменения показов");
-    }
+        $request->validate([
+            'first_period' => 'regex:/\d{4}\-\d{2}\-\d{2} \- \d{4}\-\d{2}\-\d{2}/',
+            'second_period' => 'regex:/\d{4}\-\d{2}\-\d{2} \- \d{4}\-\d{2}\-\d{2}/',
+        ]);
 
-    public function clicks(Request $request)
-    {
-        $response = $this->changes($request, "clicks");
-        return $response->with("title", "Изменения показов");
-    }
+        $user = Auth::user();
+        $site_id = $request->session()->get("ga_site_id", 1);
+        $sites = GoogleAnalyticsSite::where("user_id", $user->id)->get();
 
+        $clickHouse = ClickHouseViews::getInstance();
+        $clickHouse->setUser($user->id);
+        $clickHouse->setSite($site_id);
+        $minDate = $clickHouse->getMinDate();
+        $maxDate = $clickHouse->getMaxDate();
+
+        if ($request->has("first_period") && $request->has("second_period")) {
+            list($firstPeriod, $secondPeriod) = $this->getPeriodsFromRequest($request);
+        } else {
+            list($firstPeriod, $secondPeriod) = $this->getDefaultPeriods($minDate, $maxDate);
+        }
+        if ($firstPeriod === false) {
+            return back()->withFail("Период задан не верно или недостаточно данных для анализа");
+        }
+        $data = $clickHouse->getChangesData("pageviews", $firstPeriod, $secondPeriod);
+        $grownData = array();
+        $downData = array();
+        $stableData = array();
+        $totalData = 0;
+        $totalGrown = 0;
+        $countGrown = 0;
+        $totalDown = 0;
+        $countDown = 0;
+        $countStable = 0;
+        foreach ($data as $row) {
+            $totalData += $row["data"];
+            if ($row["result"] > 0) {
+                $grownData[] = $row;
+                $totalGrown +=  $row["result"];
+                $countGrown++;
+            } elseif ($row["result"] < 0) {
+                $downData[] = $row;
+                $totalDown +=  $row["result"];
+                $countDown++;
+            } else {
+                $stableData[] = $row;
+                $countStable++;
+            }
+        }
+        uasort($grownData, function ($a, $b) {
+            return ($b['result'] - $a['result']);
+        });
+        uasort($downData, function ($a, $b) {
+            return ($a['result'] - $b['result']);
+        });
+        uasort($stableData, function ($a, $b) {
+            return ($b['data'] - $a['data']);
+        });
+        return view("changes.index")
+            ->with("totalData", $totalData)
+            ->with("stableData", $stableData)
+            ->with("grownData", $grownData)
+            ->with("downData", $downData)
+            ->with("totalGrown", $totalGrown)
+            ->with("totalDown", $totalDown)
+            ->with("countGrown", $countGrown)
+            ->with("countDown", $countDown)
+            ->with("countStable", $countStable)
+            ->with("first_period", $firstPeriod)
+            ->with("second_period", $secondPeriod)
+            ->with("minDate", $minDate)
+            ->with("maxDate", $maxDate)
+            ->with("site_id", $site_id)
+            ->with("sites", $sites);
+    }
 
     public function keywords(Request $request)
     {
@@ -34,13 +100,14 @@ class ChangesController extends Controller
             'first_period' => 'regex:/\d{4}\-\d{2}\-\d{2} \- \d{4}\-\d{2}\-\d{2}/',
             'second_period' => 'regex:/\d{4}\-\d{2}\-\d{2} \- \d{4}\-\d{2}\-\d{2}/',
             'url' => 'required|url',
-            'field' => 'required|in:impressions,clicks'
         ]);
         $user = Auth::user();
-        $site_id = $request->session()->get("gsc_site_id", 1);
-        $sites = GoogleGscSite::where("user_id", $user->id)->get();
+        $ga_site_id = $request->session()->get("ga_site_id", 1);
+        $gaSite = GoogleAnalyticsSite::findOrFail($ga_site_id);
+        $gscSite = GoogleGscSite::where("domain", $gaSite->domain)->first();
+        $site_id = $gscSite->id;
+
         $url = $request->get("url");
-        $field = $request->get("field", "impressions");
 
         $clickHouse = ClickHousePositions::getInstance();
         $clickHouse->setUser($user->id);
@@ -56,7 +123,7 @@ class ChangesController extends Controller
         if ($firstPeriod === false) {
             return back()->withFail("Период задан не верно или недостаточно данных для анализа");
         }
-        $data = $clickHouse->getKeywordsChangesData($url, $firstPeriod, $secondPeriod, $field);
+        $data = $clickHouse->getKeywordsChangesData($url, $firstPeriod, $secondPeriod, "clicks");
         $grownData = array();
         $downData = array();
         $stableData = array();
@@ -100,84 +167,6 @@ class ChangesController extends Controller
             ->with("countGrown", $countGrown)
             ->with("countDown", $countDown)
             ->with("countStable", $countStable);
-    }
-
-    private function changes(Request $request, $field)
-    {
-        $request->validate([
-            'first_period' => 'regex:/\d{4}\-\d{2}\-\d{2} \- \d{4}\-\d{2}\-\d{2}/',
-            'second_period' => 'regex:/\d{4}\-\d{2}\-\d{2} \- \d{4}\-\d{2}\-\d{2}/',
-        ]);
-
-        $user = Auth::user();
-        $site_id = $request->session()->get("gsc_site_id", 1);
-        $sites = GoogleGscSite::where("user_id", $user->id)->get();
-
-        $clickHouse = ClickHousePositions::getInstance();
-        $clickHouse->setUser($user->id);
-        $clickHouse->setSite($site_id);
-        $minDate = $clickHouse->getMinDate();
-        $maxDate = $clickHouse->getMaxDate();
-
-        if ($request->has("first_period") && $request->has("second_period")) {
-            list($firstPeriod, $secondPeriod) = $this->getPeriodsFromRequest($request);
-        } else {
-            list($firstPeriod, $secondPeriod) = $this->getDefaultPeriods($minDate, $maxDate);
-        }
-        if ($firstPeriod === false) {
-            return back()->withFail("Период задан не верно или недостаточно данных для анализа");
-        }
-        $data = $clickHouse->getChangesData($field, $firstPeriod, $secondPeriod);
-        $grownData = array();
-        $downData = array();
-        $stableData = array();
-        $totalData = 0;
-        $totalGrown = 0;
-        $countGrown = 0;
-        $totalDown = 0;
-        $countDown = 0;
-        $countStable = 0;
-        foreach ($data as $row) {
-            $totalData += $row["data"];
-            if ($row["result"] > 0) {
-                $grownData[] = $row;
-                $totalGrown +=  $row["result"];
-                $countGrown++;
-            } elseif ($row["result"] < 0) {
-                $downData[] = $row;
-                $totalDown +=  $row["result"];
-                $countDown++;
-            } else {
-                $stableData[] = $row;
-                $countStable++;
-            }
-        }
-        uasort($grownData, function ($a, $b) {
-            return ($b['result'] - $a['result']);
-        });
-        uasort($downData, function ($a, $b) {
-            return ($a['result'] - $b['result']);
-        });
-        uasort($stableData, function ($a, $b) {
-            return ($b['data'] - $a['data']);
-        });
-        return view("changes.impressions")
-            ->with("field", $field)
-            ->with("totalData", $totalData)
-            ->with("stableData", $stableData)
-            ->with("grownData", $grownData)
-            ->with("downData", $downData)
-            ->with("totalGrown", $totalGrown)
-            ->with("totalDown", $totalDown)
-            ->with("countGrown", $countGrown)
-            ->with("countDown", $countDown)
-            ->with("countStable", $countStable)
-            ->with("first_period", $firstPeriod)
-            ->with("second_period", $secondPeriod)
-            ->with("minDate", $minDate)
-            ->with("maxDate", $maxDate)
-            ->with("site_id", $site_id)
-            ->with("sites", $sites);
     }
 
     private function getPeriodsFromRequest($request)

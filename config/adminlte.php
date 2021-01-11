@@ -231,61 +231,21 @@ return [
     */
 
     'menu' => [
-        ['header' => 'История'],
+        ['header' => 'Статистика'],
         [
-            'text' => 'История позиций',
-            'url'  => '/stats/positions',
+            'text' => 'По странице',
+            'url'  => 'page',
             'icon' => 'fas fa-fw fa-poll',
         ],
         [
-            'text' => 'История показов',
-            'url'  => '/stats/impressions',
+            'text' => 'По сайту',
+            'url'  => 'changes',
             'icon' => 'fas fa-fw fa-plus-square',
         ],
         [
-            'text' => 'История кликов',
-            'url'  => '/stats/clicks',
+            'text' => 'Выполнить запрос',
+            'url'  => 'request',
             'icon' => 'fas fa-fw fa-mouse',
-        ],
-        [
-            'text' => 'История CTR',
-            'url'  => '/stats/ctr',
-            'icon' => 'fas fa-fw fa-crosshairs',
-        ],
-        ['header' => 'Календарь'],
-        [
-            'text' => 'Все просмотры',
-            'url'  => '/stats/pageviews',
-            'icon' => 'fas fa-fw fa-eye',
-        ],
-        [
-            'text' => 'Просмотры из поиска',
-            'url'  => '/stats/organic_searches',
-            'icon' => 'fas fa-fw fa-eye',
-        ],
-        [
-            'text' => 'Доход',
-            'url'  => '/stats/revenue',
-            'icon' => 'fas fa-fw fa-dollar-sign',
-        ],
-
-        ['header' => 'Изменения'],
-        [
-            'text' => 'Показы',
-            'url'  => '/changes/impressions',
-            'icon' => 'fas fa-fw fa-plus-square',
-        ],
-        [
-            'text' => 'Клики',
-            'url'  => '/changes/clicks',
-            'icon' => 'fas fa-fw fa-mouse',
-        ],
-
-        ['header' => 'Другое'],
-        [
-            'text' => 'Сводка данных',
-            'url'  => 'balance',
-            'icon' => 'fas fa-fw fa-user',
         ],
 
         ['header' => 'Настройки'],
@@ -401,7 +361,7 @@ return [
         ],
         [
             'name' => 'Chartjs',
-            'active' => false,
+            'active' => true,
             'files' => [
                 [
                     'type' => 'js',
@@ -464,6 +424,18 @@ return [
                 ],
             ],
         ],
+        [
+            'name' => 'Vue-chartjs',
+            'active' => true,
+            'files' => [
+                [
+                    'type' => 'js',
+                    'asset' => false,
+                    'location' => '//unpkg.com/vue-chartjs/dist/vue-chartjs.min.js',
+                ],
+            ],
+        ],
+
         [
             'name' => 'Color',
             'active' => true,

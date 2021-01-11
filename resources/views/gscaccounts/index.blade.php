@@ -3,8 +3,39 @@
 @section('title', 'Загрузка данных из Google Search Console')
 
 @section('content_header')
-<h1 class="m-0 text-dark">Загрузка данных из Google Search Console</h1>
-@stop
+    <div class="modal" id="request-details" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">Журнал</h4>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"
+                        id="request-details-close">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>Что то пошло не так... :(</p>
+                </div>
+                <div class="modal-footer justify-content-between">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Закрыть</button>
+                </div>
+            </div>
+            <!-- /.modal-content -->
+        </div>
+        <!-- /.modal-dialog -->
+    </div>
+<div class="row">
+    <div class="col-md-9">
+        <h1 class="m-0 text-dark">Загрузка данных из Google Search Console</h1>
+    </div>
+    <div class="col-md-3">
+        <button type="button" class="btn btn-warning" data-toggle="modal"
+            data-target="#request-details"
+            data-remote="{{route('logs.index', "gsc")}}">Журнал</button>
+    </div>
+</div>
+
+@endsection
 
 @section('content')
 @include('notifications')
@@ -82,7 +113,6 @@
             }
             let response = await fetch("/gscaccounts/"+site_id+"/load?last_task_id="+loadNextDates.taskId);
             let data = await response.json();
-            console.log(data)
             loadNextDates.count += data["count"]
             loadNextDates.taskId = data["last_task_id"]
             if(data["count"] == 0){
@@ -100,13 +130,25 @@
             spinner.addClass("fa fa-spinner fa-spin");
             $(this).empty();
             $(this).append(spinner);
-            var timer = setInterval(await async function(){
+            var loader = async function(){
                 let result = await loadNextDates(site_id);
                 if(result == false){
-                    clearInterval(timer)
                     window.location.reload();
+                }else{
+                    setTimeout(loader, 200)
                 }
-            }, 200);
+            };
+            loader();
         });
 </script>
+<script>
+    document.addEventListener('DOMContentLoaded', function(){
+        $('#request-details').on('show.bs.modal', function (e) {
+            var button = $(e.relatedTarget);
+            var modal = $(this);
+            modal.find('.modal-body').load(button.data("remote"));
+        });
+    });
+</script>
+
 @endsection

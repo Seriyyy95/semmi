@@ -1,6 +1,6 @@
 @extends('adminlte::page')
 
-@section('title', $title)
+@section('title', "Изменение переходов на сайт")
 
 @section('content_header')
 <div class="row">
@@ -34,7 +34,7 @@
         </form>
     </div>
     <div class="col-md-3">
-        @include ('siteselector', ["route" => "stats.select_gsc_site"])
+        @include ('siteselector', ["route" => "stats.select_ga_site"])
     </div>
 </div>
 @endsection
@@ -141,7 +141,6 @@
                             <td>
                                 @php $params = array() @endphp
                                 @php $params["url"] = $row["url"] @endphp
-                                @php $params["field"] = $field @endphp
                                 @php $params["first_period"] = $first_period["startDate"] . " - ". $first_period["endDate"] @endphp
                                 @php $params["second_period"] = $second_period["startDate"] . " - ". $second_period["endDate"] @endphp
 
@@ -174,7 +173,6 @@
                                 @php
                                     $params = array();
                                     $params["url"] = $row["url"];
-                                    $params["field"] = $field;
                                     $params["first_period"] = $first_period["startDate"] . " - ". $first_period["endDate"];
                                     $params["second_period"] = $second_period["startDate"] . " - ". $second_period["endDate"];
                                 @endphp
@@ -209,7 +207,6 @@
                                 @php
                                     $params = array();
                                     $params["url"] = $row["url"];
-                                    $params["field"] = $field;
                                     $params["first_period"] = $first_period["startDate"] . " - ". $first_period["endDate"];
                                     $params["second_period"] = $second_period["startDate"] . " - ". $second_period["endDate"];
                                 @endphp

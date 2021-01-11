@@ -14,6 +14,7 @@ use App\ClickHousePositions;
 use App\GoogleGscSite;
 use App\GscTask;
 use App\Jobs\GscLoadJob;
+use App\LoadLogger;
 
 class GscAccountsController extends Controller
 {
@@ -70,6 +71,8 @@ class GscAccountsController extends Controller
         $site = GoogleGscSite::findOrFail($id);
         $user = Auth::user();
 
+        $logger = new LoadLogger($user->id, "gsc");
+
         $lastElement = GscTask::selectRaw("MAX(date) as date")
             ->where("user_id", $user->id)
             ->where("site_id", $site->id)
@@ -84,8 +87,10 @@ class GscAccountsController extends Controller
         $count = 0;
         if ($request->has("last_task_id") && $request->get("last_task_id") > 0) {
             $lastTaskId = $request->get("last_task_id");
+            $logger->write("В задание $lastTaskId добавлено " . count($dates) . " дат");
         } else {
             $lastTaskId = null;
+            $logger->write("Новое задание создано, добавлено " . count($dates) . " дат");
         }
 
         if (count($dates) > 0) {

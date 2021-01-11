@@ -48,14 +48,15 @@ abstract class ClickHouse
         $this->db->write("INSERT INTO {$this->database}.{$this->table} ($keysString) VALUES $valuesString");
     }
 
-    public function getMaxValue($field, $interval, $aggFunc){
-        if($interval == "week"){
+    public function getMaxValue($field, $interval, $aggFunc)
+    {
+        if ($interval == "week") {
             $groupFunc = "toStartOfWeek";
-        }elseif($interval == "month"){
+        } elseif ($interval == "month") {
             $groupFunc = "toStartOfMonth";
-        }elseif($interval == "quarter"){
+        } elseif ($interval == "quarter") {
             $groupFunc = "toStartOfQuarter";
-        }else{
+        } else {
             throw new \Exception("Invalid interval: $interval");
         }
         $query = "SELECT MAX(data) as max_value FROM (SELECT url,$groupFunc(date) as group_date, $aggFunc($field) as data FROM {$this->database}.{$this->table} WHERE user_id={$this->user_id} AND site_id={$this->site_id} GROUP BY url,group_date)";
@@ -63,12 +64,34 @@ abstract class ClickHouse
         $rows = $result->rows();
         if (count($rows) > 0) {
             return $rows[0]["max_value"];
-        }else{
+        } else {
             return 0;
         }
-
     }
 
+    public function listTables()
+    {
+        $query = "SHOW TABLES";
+        $result = $this->db->select($query);
+        $rows = $result->rows();
+        return $rows;
+    }
+
+    public static function execute($query)
+    {
+        $config = [
+            'host' => env("CLICKHOUSE_HOST"),
+            'port' => env("CLICKHOUSE_PORT"),
+            'username' => env("CLICKHOUSE_USER"),
+            'password' => env("CLICKHOUSE_PASSWORD")
+        ];
+        $database = env('CLICKHOUSE_DATABASE');
+        $db = new Client($config);
+        $db->database($database);
+        $result = $db->select($query);
+        $rows = $result->rows();
+        return $rows;
+    }
 
     public function setUser(int $user_id)
     {

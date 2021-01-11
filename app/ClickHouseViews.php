@@ -49,10 +49,14 @@ class ClickHouseViews extends ClickHouse
             $counter++;
         }
         $periodsString = implode(", ", $periodsData);
-        $query = "SELECT url,$periodsString, $function($field) as total FROM {$this->database}.{$this->table} WHERE url='$url' GROUP BY url ORDER BY url DESC LIMIT 250";
+        $query = "SELECT $periodsString, $function($field) as total FROM {$this->database}.{$this->table} WHERE url='$url'";
         $result = $this->db->select($query);
         $data = $result->rows();
-        return $data;
+        if (count($data) > 0) {
+            return $data[0];
+        } else {
+            return array("total" => 0);
+        }
     }
 
     public function getUrlRevenue($url)
@@ -149,6 +153,14 @@ class ClickHouseViews extends ClickHouse
         } else {
             return 0;
         }
+    }
+
+    public function getChangesData($field, $firstPeriod, $secondPeriod)
+    {
+        $query = "SELECT url, sumIf($field, date > '{$firstPeriod["startDate"]}' and date < '{$firstPeriod["endDate"]}') as data, sumIf($field, date > '{$secondPeriod["startDate"]}' and date < '{$secondPeriod["endDate"]}') as previous_data, minus(previous_data, data) as result FROM {$this->database}.{$this->table} WHERE user_id={$this->user_id} AND site_id={$this->site_id} GROUP BY url ORDER BY data DESC";
+        $result = $this->db->select($query);
+        $data = $result->rows();
+        return $data;
     }
 
     protected function createTablesIfNotExist()

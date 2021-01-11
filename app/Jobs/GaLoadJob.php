@@ -12,6 +12,7 @@ use App\GoogleAnalyticsSite;
 use App\OptionsManager;
 use App\GoogleDataLoader;
 use App\ClickHouseViews;
+use App\LoadLogger;
 
 class GaLoadJob implements ShouldQueue
 {
@@ -20,6 +21,7 @@ class GaLoadJob implements ShouldQueue
     public $tries = 10;
     public $timout = 0;
     public $gaTask;
+    private $loadLogger = null;
 
     /**
      * Create a new job instance.
@@ -38,11 +40,14 @@ class GaLoadJob implements ShouldQueue
      */
     public function handle()
     {
+        $user_id = $this->gaTask->user_id;
+        $site_id = $this->gaTask->site_id;
+        $gaSite = GoogleAnalyticsSite::findOrFail($this->gaTask->site_id);
+
+        $this->loadLogger = new LoadLogger($user_id, "ga");
+
         if ($this->gaTask->status != "disabled") {
             $date = $this->gaTask->date;
-            $user_id = $this->gaTask->user_id;
-            $site_id = $this->gaTask->site_id;
-
             $optionsManager = new OptionsManager();
             $optionsManager->setUser($user_id);
 
@@ -53,17 +58,19 @@ class GaLoadJob implements ShouldQueue
             $clickHouse->setUser($user_id);
             $clickHouse->setSite($site_id);
 
-            $gaSite = GoogleAnalyticsSite::findOrFail($this->gaTask->site_id);
 
             $resultData = $gloader->getAPI()->getAnalyticsData($gaSite->profile_id, $date, $gaSite->domain);
-            \Log::info(print_r($resultData, true));
             $count = count($resultData);
             $clickHouse->index($resultData);
             $this->gaTask->offset = $count;
             $this->gaTask->save();
             $this->gaTask->status = "finished";
             $this->gaTask->save();
-            $this->updateParsent($gaSite);
+            $stats = $this->updateParsent($gaSite);
+            $this->loadLogger->write("Загрузка данных сайта {$gaSite->domain} для даты {$this->gaTask->date} завершена");
+            $this->loadLogger->write("Всего задач в очереди: {$stats['total']}, завершено: {$stats['finalized']}, процент: {$stats['parsent']}");
+        } else {
+            $this->loadLogger->write("Загрузка данных сайта {$gaSite->domain} для даты " . $this->gaTask->date . " пропущена");
         }
     }
 
@@ -75,20 +82,25 @@ class GaLoadJob implements ShouldQueue
             ->where("status", "!=", "disabled")
             ->where("id", ">", $gscSite->last_task_id)
             ->count();
-        \Log::info("Finalized: $finalized");
         $max = GaTask::selectRaw("MAX(id) as id")
             ->where("user_id", $gscSite->user_id)
             ->where("site_id", $gscSite->id)
             ->first()->id;
         $total = $max - $gscSite->last_task_id;
-        \Log::info("total: $total");
         $gscSite->parsent = $finalized * 100 / $total;
         $gscSite->save();
+
+        return array(
+            "total" => $total,
+            "finalized" => $finalized,
+            "parsent" => round($gscSite->parsent, 2),
+        );
     }
 
 
-    public function failed()
+    public function failed(\Exception $e)
     {
+        $this->loadLogger->write("При выполнении задачи {$this->gaTask->id} произошла ошибка: " . $e->getMessage());
         $this->gaTask->status = "failed";
         $this->gaTask->save();
     }
