@@ -19,7 +19,7 @@ class DenyForDemo
     {
         if (Auth::user() != null) {
             if (Auth::user()->name == "demo") {
-                return redirect("/stats/positions")->withFail("Эта страница недоступна для demo пользователя");
+                return redirect("/home")->withFail("Эта страница недоступна для demo пользователя");
             }
         }
 
