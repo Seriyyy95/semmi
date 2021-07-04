@@ -150,9 +150,7 @@
             },
             methods: {
                 loadPageviews: async function() {
-                    console.log(this.searchedUrl);
-                    console.log("/page/get_url_calendar?url=" + this.searchedUrl + "&field=pageviews&agg_function=sum");
-                    let response = await fetch("/page/get_url_calendar?url=" + this.searchedUrl + "&field=pageviews&agg_function=sum");
+                    let response = await fetch("/api/page/get_url_calendar?url=" + this.searchedUrl + "&field=pageviews&agg_function=sum&api_token={{$api_token}}&ga_site_id={{$site_id}}");
                     let data = await response.json();
                     let startYear = this.periodsMetadata["firstYear"];
                     let endYear = this.periodsMetadata["lastYear"];
@@ -183,7 +181,7 @@
                     }while(startYear <= endYear);
                 },
                 loadRevenue: async function() {
-                    let response = await fetch("/page/get_url_calendar?url=" + this.searchedUrl + "&field=adsenseRevenue&agg_function=sum");
+                    let response = await fetch("/api/page/get_url_calendar?url=" + this.searchedUrl + "&field=adsenseRevenue&agg_function=sum&api_token={{$api_token}}&ga_site_id={{$site_id}}");
                     let data = await response.json();
                     let startYear = this.periodsMetadata["firstYear"];
                     let endYear = this.periodsMetadata["lastYear"];
@@ -214,12 +212,12 @@
                     }while(startYear <= endYear);
                 },
                 loadKeywordsData: async function(){
-                    let response = await fetch("/page/get_url_keywords?url=" + this.searchedUrl);
+                    let response = await fetch("/api/page/get_url_keywords?url=" + this.searchedUrl + "&api_token={{$api_token}}&ga_site_id={{$site_id}}");
                     let data = await response.json();
                     this.keywordsData = data;
                 },
                 loadGraphData: async function(){
-                    let response = await fetch("/page/get_url_graph?url=" + this.searchedUrl);
+                    let response = await fetch("/api/page/get_url_graph?url=" + this.searchedUrl + "&api_token={{$api_token}}&ga_site_id={{$site_id}}");
                     let data = await response.json();
                     this.positionsGraphData = {
                         labels: data["headerData"],

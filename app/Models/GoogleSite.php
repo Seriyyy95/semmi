@@ -1,10 +1,31 @@
 <?php
 
-namespace App;
+namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class GoogleSite extends Model
+/**
+ * App\Models\GoogleSite
+ *
+ * @property int $id
+ * @property int $user_id
+ * @property string $domain
+ * @property string $start_date
+ * @property string $end_date
+ * @property string|null $first_date
+ * @property string|null $last_date
+ * @property int|null $last_task_id
+ * @property int $parsent
+ * @property int|null $autoload
+ *
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @method static \Illuminate\Database\Eloquent\Builder|GoogleSite newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|GoogleSite newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|GoogleSite query()
+ * @mixin \Eloquent
+ */
+abstract class GoogleSite extends Model
 {
 
     private $nextDate;

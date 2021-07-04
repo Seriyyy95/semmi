@@ -6,22 +6,23 @@ use ClickHouseDB\Client;
 
 abstract class ClickHouse
 {
-    protected $db;
-    protected $user_id;
-    protected $site_id;
-    protected $table;
+    protected Client $db;
+    protected int $site_id;
+    protected string $table;
+    protected string $database;
 
     protected function __construct(string $table)
     {
         $config = [
-            'host' => env("CLICKHOUSE_HOST"),
-            'port' => env("CLICKHOUSE_PORT"),
-            'username' => env("CLICKHOUSE_USER"),
-            'password' => env("CLICKHOUSE_PASSWORD")
+            'host' => \config('services.clickhouse.host'),
+            'port' => \config('services.clickhouse.port'),
+            'username' => \config('services.clickhouse.username'),
+            'password' => \config('services.clickhouse.password'),
         ];
-        $this->database = env('CLICKHOUSE_DATABASE');
+        $this->database = \config('services.clickhouse.database');
         $this->db = new Client($config);
         $this->table = $table;
+
         $this->createDatabaseIfNotExist();
         $this->createTablesIfNotExist();
     }
@@ -34,18 +35,21 @@ abstract class ClickHouse
         if (count($data) == 0) {
             return;
         }
-        $keys = array_keys($data[0]);
-        $keys[] = "site_id";
-        $keys[] = "user_id";
-        $keysString = implode(",", $keys);
         $valuesArray = array();
+        $keysArray = array();
         foreach ($data as $row) {
             $row["site_id"] = $this->site_id;
-            $row["user_id"] = $this->user_id;
-            $valuesArray[] .= "('" . implode("','", array_values($row)) . "') ";
+            $valuesArray[] = array_values($row);
+            if (count($keysArray) == 0) {
+                $keysArray = array_keys($row);
+            }
         }
-        $valuesString = implode(", ", $valuesArray);
-        $this->db->write("INSERT INTO {$this->database}.{$this->table} ($keysString) VALUES $valuesString");
+        $stats = $this->db->insert(
+            "{$this->database}.{$this->table}",
+            $valuesArray,
+            $keysArray
+        );
+        return $stats;
     }
 
     public function getMaxValue($field, $interval, $aggFunc)
@@ -59,8 +63,18 @@ abstract class ClickHouse
         } else {
             throw new \Exception("Invalid interval: $interval");
         }
-        $query = "SELECT MAX(data) as max_value FROM (SELECT url,$groupFunc(date) as group_date, $aggFunc($field) as data FROM {$this->database}.{$this->table} WHERE user_id={$this->user_id} AND site_id={$this->site_id} GROUP BY url,group_date)";
-        $result = $this->db->select($query);
+
+        $params = array(
+            "table" => "{$this->database}.{$this->table}",
+            "groupFunc" => $groupFunc,
+            "aggFunc" => $aggFunc,
+            "field" => $field,
+            "site_id" => $this->site_id,
+        );
+        $query = "SELECT MAX(data) as max_value FROM (SELECT url,{groupFunc}(date) as group_date, {aggFunc}({field}) as data FROM {table} WHERE site_id={site_id} GROUP BY url,group_date)";
+
+        $result = $this->db->select($query, $params);
+
         $rows = $result->rows();
         if (count($rows) > 0) {
             return $rows[0]["max_value"];
@@ -73,29 +87,23 @@ abstract class ClickHouse
     {
         $query = "SHOW TABLES";
         $result = $this->db->select($query);
-        $rows = $result->rows();
-        return $rows;
+        return $result->rows();
     }
 
     public static function execute($query)
     {
         $config = [
-            'host' => env("CLICKHOUSE_HOST"),
-            'port' => env("CLICKHOUSE_PORT"),
-            'username' => env("CLICKHOUSE_USER"),
-            'password' => env("CLICKHOUSE_PASSWORD")
+            'host' => \config('services.clickhouse.host'),
+            'port' => \config('services.clickhouse.port'),
+            'username' => \config('services.clickhouse.username'),
+            'password' => \config('services.clickhouse.password'),
         ];
-        $database = env('CLICKHOUSE_DATABASE');
+        $database = \config('services.clickhouse.database');
+
         $db = new Client($config);
         $db->database($database);
         $result = $db->select($query);
-        $rows = $result->rows();
-        return $rows;
-    }
-
-    public function setUser(int $user_id)
-    {
-        $this->user_id = $user_id;
+        return $result->rows();
     }
 
     public function setSite(int $site_id)
@@ -105,29 +113,51 @@ abstract class ClickHouse
 
     public function delete()
     {
-        $this->db->write("ALTER TABLE {$this->database}.{$this->table} DELETE WHERE site_id={$this->site_id}");
+        $params = array(
+            "table" => "{$this->database}.{$this->table}",
+            "site_id" => $this->site_id,
+        );
+        $this->db->write("ALTER TABLE {table} DELETE WHERE site_id={site_id}", $params);
     }
 
     public function deleteOlderThan(string $date)
     {
-        $this->db->write("ALTER TABLE {$this->database}.{$this->table} DELETE WHERE date >= '$date' AND site_id={$this->site_id}");
+        $params = array(
+            "table" => "{$this->database}.{$this->table}",
+            "site_id" => $this->site_id,
+            "date" => $date
+        );
+
+        $this->db->write("ALTER TABLE {table} DELETE WHERE date >= '{date}' AND site_id={site_id}", $params);
     }
 
     public function getMinDate()
     {
-        $result = $this->db->select("SELECT MIN(date) as date FROM {$this->database}.{$this->table} WHERE site_id={$this->site_id} AND user_id={$this->user_id}");
+        $params = array(
+            "table" => "{$this->database}.{$this->table}",
+            "site_id" => $this->site_id,
+        );
+        $result = $this->db->select("SELECT MIN(date) as date FROM {table} WHERE site_id={site_id}", $params);
         return $result->fetchOne()["date"];
     }
 
     public function getMaxDate()
     {
-        $result = $this->db->select("SELECT MAX(date) as date FROM {$this->database}.{$this->table} WHERE site_id={$this->site_id} AND user_id={$this->user_id}");
+        $params = array(
+            "table" => "{$this->database}.{$this->table}",
+            "site_id" => $this->site_id,
+        );
+
+        $result = $this->db->select("SELECT MAX(date) as date FROM {table} WHERE site_id={site_id}", $params);
         return $result->fetchOne()["date"];
     }
 
 
     private function createDatabaseIfNotExist()
     {
-        $this->db->write("CREATE DATABASE IF NOT EXISTS " . $this->database);
+        $params = array(
+            "database" => $this->database
+        );
+        $this->db->write("CREATE DATABASE IF NOT EXISTS {database}", $params);
     }
 }

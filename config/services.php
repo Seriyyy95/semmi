@@ -29,5 +29,12 @@ return [
         'secret' => env('AWS_SECRET_ACCESS_KEY'),
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
+    'clickhouse' => [
+        'host' => env("CLICKHOUSE_HOST"),
+        'port' => env("CLICKHOUSE_PORT"),
+        'username' => env("CLICKHOUSE_USER"),
+        'password' => env("CLICKHOUSE_PASSWORD"),
+        'database' => env('CLICKHOUSE_DATABASE'),
+    ]
 
 ];

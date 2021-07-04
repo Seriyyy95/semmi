@@ -2,21 +2,30 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Http\Request;
-use App\LoadLogger;
+use App\Services\Logger\LoadLogger;
 
+/**
+ * Class LogsController
+ * @package App\Http\Controllers
+ */
 class LogsController extends Controller
 {
+
+    /**
+     * LogsController constructor.
+     */
     public function __construct()
     {
         $this->middleware("auth");
     }
 
+    /**
+     * @param $source
+     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\View\Factory|\Illuminate\Contracts\View\View
+     */
     public function index($source)
     {
-        $user_id = Auth::user()->id;
-        $logger = new LoadLogger($user_id, $source);
+        $logger = new LoadLogger($source);
         $logs = $logger->list();
         return view("logs.index")
             ->with("logs", $logs);

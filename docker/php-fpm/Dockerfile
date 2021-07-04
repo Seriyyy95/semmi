@@ -1,5 +1,4 @@
-FROM php:7.2.26-fpm-stretch
-
+FROM php:8.0-fpm
 RUN apt-get update && apt-get install -y \
         libfreetype6-dev \
         libjpeg62-turbo-dev \
@@ -11,10 +10,13 @@ RUN apt-get update && apt-get install -y \
         libonig-dev \
         graphviz \
         libpq-dev \
-        libmemcached-dev \
-        curl
+        curl \
+        vim \
+        git \
+        libzip-dev \
+        zip
 
-RUN docker-php-ext-install pdo pdo_mysql pcntl
+RUN docker-php-ext-install pdo pdo_mysql mbstring pcntl zip
 
 ENV TZ=Europe/Kiev
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone

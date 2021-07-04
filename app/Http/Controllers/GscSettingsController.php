@@ -2,14 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\GoogleSettings;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Session;
-use Storage;
-use App\OptionsManager;
-use App\GoogleDataLoader;
-use App\GoogleNeedConfigFileException;
-use App\GoogleAPI;
+use Illuminate\Support\Facades\Session;
 
 class GscSettingsController extends Controller
 {
@@ -19,55 +14,46 @@ class GscSettingsController extends Controller
         $this->middleware('demo');
     }
 
-    public function index()
+    public function index(GoogleSettings $settings)
     {
-        $user = Auth::user();
-        $optionsManager = new OptionsManager();
-        $optionsManager->setUser($user->id);
-        try {
-            $gloader = new GoogleDataLoader($optionsManager);
-            $gloader->setMode(GoogleAPI::MODE_SERVICE);
-            $gloader->setUser($user->id);
-        } catch (GoogleNeedConfigFileException $e) {
-            Session::flash("fail", "Необходимо загрузить файл сервис-аккаунта Google");
-        }
-
-        $hasFile = $gloader->hasConfigFile();
+        $configData = $settings->googleConfig;
+        $hasConfig = isset($configData["type"]) && $configData['type'] === 'service_account';
+        $accountMail = $configData['client_email'] ?? null;
         return view('gscsettings.index')
-            ->with("hasFile", $hasFile);
+            ->with("hasConfig", $hasConfig)
+            ->with("accountMail", $accountMail);
     }
 
-    public function apply(Request $request)
+    public function apply(Request $request, GoogleSettings $settings)
     {
-        $user = Auth::user();
-        $optionsManager = new OptionsManager();
-        $optionsManager->setUser($user->id);
-
         $request->validate([
-            'config_file'=> ['required','max:200']
+            'config_data'=> ['required','string']
         ]);
 
-        try {
-            $gloader = new GoogleDataLoader($optionsManager);
-            $gloader->setUser($user->id);
-            $gloader->setMode(GoogleAPI::MODE_SERVICE);
-        } catch (GoogleNeedConfigFileException $e) {
-            Session::flash("fail", "Необходимо загрузить файл сервис-аккаунта Google");
+        $configData = @json_decode($request->get('config_data'), true);
+        if(null === $configData){
+            Session::flash('fail', 'Не удалось прочитать конфигурацию, проверьте верность данных');
+            return back();
         }
-
-        if ($request->hasFile('config_file')) {
-            $storagePath = Storage::disk('data')->path('/');
-
-            $filenameWithExt = $request->file('config_file')->getClientOriginalName();
-            $filename = pathinfo($filenameWithExt, PATHINFO_FILENAME);
-            $extension = $request->file('config_file')->getClientOriginalExtension();
-            $fileNameToStore = $filename.'_'.time().'.'.$extension;
-            $storagePath = Storage::disk('data')->path('');
-            $request->file('config_file')->move($storagePath, $fileNameToStore);
-            $gloader->setConfigFile($storagePath . $fileNameToStore);
-            Session::flash("success", "Файл сервис-аккаунта успешно загружен");
+        if(!isset($configData['type']) || (isset($configData['type'])
+                && $configData['type'] !== 'service_account')){
+            Session::flash('fail', 'Неизвестный тип конфигурации, для приложения нужена кофигурация сервис аккаунта');
+            return back();
         }
+        $settings->googleConfig = $configData;
+        $settings->save();
+
+        Session::flash("success", "Конфигурация аккаунта успешно сохранена!");
 
         return back();
+    }
+
+    public function delete(GoogleSettings $settings){
+       $settings->googleConfig = [];
+       $settings->save();
+
+       Session::flash("success", "Конфигурация аккаунта успешно удалена!");
+
+       return back();
     }
 }

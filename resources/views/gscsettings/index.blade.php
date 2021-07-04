@@ -12,16 +12,8 @@
     @csrf
     <div class="row">
         <div class="form-group col-md-8">
-            <label class="control-label">Файл данных аутентификации:</label>
-            <div class="input-group">
-                <div class="custom-file">
-                    <input name="config_file" class="form-control custom-file-input" id="config_file" type="file">
-                    <label class="custom-file-label" for="config_file">Выберите файл</label>
-                </div>
-                <div class="input-group-append">
-                    <span class="input-group-text" id="">Загрузить</span>
-                </div>
-            </div>
+            <label class="control-label">Конфигурация сервисного аккаунта для доступа к Google:</label>
+            <textarea name="config_data" cols="60" rows="10" class="form-control"></textarea>
         </div>
     </div>
     <div class="form-group">
@@ -29,9 +21,11 @@
         <a href="https://semmi.ru/instruktsii/nastrojka-dostupa-k-google-dlya-semmi-analytics/" target="_blank" class="btn btn-warning">Где взять?</a>
     </div>
 </form>
-@if($hasFile)
-    <p>Файл конфигурации загружен</p>
+@if($hasConfig)
+    <p>Конфигурация загружена, вы используете аккаунт: <b>{{$accountMail}}</b></p>
+
+    <a href="{{route('gscsettings.delete')}}" class="btn btn-danger">Удалить</a>
 @else
-    <p>Файл конфигурации не загружен </p>
+    <p>Конфигурация не загружена</p>
 @endif
 @endsection

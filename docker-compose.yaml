@@ -18,6 +18,17 @@ services:
       - docker-network
     depends_on:
       - docker-mariadb
+  scheduler:
+    restart: always
+    build:
+      context: ./docker/scheduler
+    volumes:
+      - ./:/var/www
+      - ./docker/php-fpm/timezone.ini:/usr/local/etc/php/conf.d/timezone.ini
+    networks:
+      - docker-network
+    depends_on:
+      - docker-mariadb
   docker-nginx:
     restart: always
     image: nginx
@@ -46,6 +57,8 @@ services:
       - db-data:/var/lib/mysql
     networks:
       - docker-network
+    ports:
+      - "3307:3306"
   docker-clickhouse:
     restart: always
     image: yandex/clickhouse-server:latest

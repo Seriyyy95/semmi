@@ -72,7 +72,7 @@
                     this.data = [];
                     this.error = "";
 
-                    let response = await fetch("/request/execute?query=" + encodeURI(this.query));
+                    let response = await fetch("/api/request/execute?query=" + encodeURI(this.query) + "&api_token={{$api_token}}");
                     let data = await response.json();
                     console.log(data)
                     this.error = data.error;

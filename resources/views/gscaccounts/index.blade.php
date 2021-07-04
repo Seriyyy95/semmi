@@ -47,6 +47,7 @@
                     <th>Адрес сайта</th>
                     <th>Доступно данных</th>
                     <th>Загружено или запланировано</th>
+                    <th>Автозагрузка</th>
                     <th>Действия</th>
                 </tr>
             </thead>
@@ -56,6 +57,11 @@
                     <td>{{$site->domain}}</td>
                     <td>{{$site->start_date}} - {{$site->end_date}}</td>
                     <td>{{$site->first_date}} - {{$site->last_date}}</td>
+                    <td>
+                        <label class="checkbox">
+                            <input type="checkbox" class="autoload-checkbox" autocomplete="off" data-site-id="{{$site->id}}" @if($site->autoload) checked @endif>
+                        </label>
+                    </td>
                     <td>
                         @if($site->hasActiveTasks())
                         <div class="row">
@@ -92,7 +98,7 @@
     async function updateParsent(){
         $('.gsc-site-progress').each(await async function(index, element){
             let site_id =  $(element).data('site-id');
-            let response = await fetch('/gscaccounts/' + site_id + '/status');
+            let response = await fetch('/api/gscaccounts/' + site_id + '/status?api_token={{$api_token}}');
             let data = await response.json();
             //console.log(data);
             $(element).css({width: data.parsent + '%'});
@@ -111,11 +117,12 @@
             if(loadNextDates.count === "undefined"){
                 loadNextDates.count = 0;
             }
-            let response = await fetch("/gscaccounts/"+site_id+"/load?last_task_id="+loadNextDates.taskId);
+            let response = await fetch("/api/gscaccounts/"+site_id+"/load?api_token={{$api_token}}&last_task_id="+loadNextDates.taskId);
             let data = await response.json();
             loadNextDates.count += data["count"]
             loadNextDates.taskId = data["last_task_id"]
-            if(data["count"] == 0){
+            console.log(data);
+            if(data["count"] === 0){
                 return false;
             } else{
                 return true;
@@ -132,8 +139,8 @@
             $(this).append(spinner);
             var loader = async function(){
                 let result = await loadNextDates(site_id);
-                if(result == false){
-                    window.location.reload();
+                if(result === false){
+                    window.location.reload(true);
                 }else{
                     setTimeout(loader, 200)
                 }
@@ -148,6 +155,16 @@
             var modal = $(this);
             modal.find('.modal-body').load(button.data("remote"));
         });
+        $('.autoload-checkbox').on('change', async function (e) {
+            var site_id = $(this).data('site-id');
+            var state = "disabled";
+            if($(this).is(":checked")){
+                state = "enabled";
+            }
+            let response = await fetch("/api/gscaccounts/"+site_id+"/autoload/" + state + "?api_token={{$api_token}}");
+            let data = await response.json();
+        });
+
     });
 </script>
 

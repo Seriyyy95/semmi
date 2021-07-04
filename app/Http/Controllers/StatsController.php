@@ -3,12 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use App\GoogleGscSite;
-use App\GoogleAnalyticsSite;
-use App\ClickHousePositions;
-use App\ClickHouseViews;
-use DateTime;
+use App\Models\GoogleAnalyticsSite;
 
 class StatsController extends Controller
 {

@@ -2,8 +2,6 @@
 
 namespace App;
 
-use ClickHouseDB\Client;
-
 class ClickHouseViews extends ClickHouse
 {
     protected static $instance = null;
@@ -23,15 +21,27 @@ class ClickHouseViews extends ClickHouse
 
     public function getUrls()
     {
-        $query = "SELECT url, SUM(pageviews) as total_pageviews FROM {$this->database}.{$this->table} WHERE user_id={$this->user_id} AND site_id={$this->site_id} GROUP BY url HAVING total_pageviews > 100 ORDER BY total_pageviews DESC";
-        $result = $this->db->select($query);
+        $params = array(
+            "database" => $this->database,
+            "table" => $this->table,
+            "site_id" => $this->site_id,
+        );
+        $query = "SELECT url, SUM(pageviews) as total_pageviews FROM {database}.{table} WHERE site_id={site_id} GROUP BY url HAVING total_pageviews > 100 ORDER BY total_pageviews DESC";
+        $result = $this->db->select($query, $params);
         return $result->rows();
     }
 
     public function getFirstUrlDate($url)
     {
-        $query = "SELECT MIN(date) as date FROM {$this->database}.{$this->table} WHERE url='$url' AND site_id={$this->site_id} AND user_id={$this->user_id}";
-        $result = $this->db->select($query);
+        $params = array(
+            "database" => $this->database,
+            "table" => $this->table,
+            "site_id" => $this->site_id,
+            "url" => $url,
+        );
+
+        $query = "SELECT MIN(date) as date FROM {database}.{table} WHERE url='{url}' AND site_id={site_id}";
+        $result = $this->db->select($query, $params);
         $data = $result->rows();
         if (count($data) > 0 && $data[0]["date"] > 0) {
             return $data[0]["date"];
@@ -42,15 +52,24 @@ class ClickHouseViews extends ClickHouse
 
     public function getHistoryData($periods, $url, $field = "pageviews", $function = "sum")
     {
+        $params = array(
+            "database" => $this->database,
+            "table" => $this->table,
+            "site_id" => $this->site_id,
+            "url" => $url,
+            "field" => $field,
+            "function" => $function,
+        );
+
         $periodsData = array();
         $counter = 0;
         foreach ($periods as $period) {
-            $periodsData[] = "{$function}If($field, date > '{$period['start_date']}' and date < '{$period['end_date']}') as row_$counter";
+            $periodsData[] = "{function}If({field}, date > '{$period['start_date']}' and date < '{$period['end_date']}') as row_$counter";
             $counter++;
         }
         $periodsString = implode(", ", $periodsData);
-        $query = "SELECT $periodsString, $function($field) as total FROM {$this->database}.{$this->table} WHERE url='$url'";
-        $result = $this->db->select($query);
+        $query = "SELECT $periodsString, {function}({field}) as total FROM {database}.{table} WHERE url='{url}'";
+        $result = $this->db->select($query, $params);
         $data = $result->rows();
         if (count($data) > 0) {
             return $data[0];
@@ -59,118 +78,35 @@ class ClickHouseViews extends ClickHouse
         }
     }
 
-    public function getUrlRevenue($url)
-    {
-        $query = "SELECT url, SUM(adsenseRevenue) as revenue FROM {$this->database}.{$this->table} WHERE url='$url' AND site_id={$this->site_id} AND user_id={$this->user_id} GROUP BY url";
-        $result = $this->db->select($query);
-        $data = $result->rows();
-        if (count($data) > 0 && $data[0]["revenue"] > 0) {
-            return $data[0]["revenue"];
-        } else {
-            return 0;
-        }
-    }
-
-    public function getAvgRevenue($url)
-    {
-        $query = "SELECT AVG(revenue) as avg_revenue FROM (SELECT SUM(adsenseRevenue) as revenue FROM {$this->database}.{$this->table} WHERE url='$url' AND site_id={$this->site_id} AND user_id={$this->user_id} GROUP BY toStartOfMonth(date) HAVING revenue > 0)";
-        $result = $this->db->select($query);
-        $data = $result->rows();
-        if (count($data) > 0 && $data[0]["avg_revenue"] > 0) {
-            return $data[0]["avg_revenue"];
-        } else {
-            return 0;
-        }
-    }
-
-    public function getTotalRevenue()
-    {
-        $query = "SELECT SUM(adsenseRevenue) as revenue FROM {$this->database}.{$this->table} WHERE site_id={$this->site_id} AND user_id={$this->user_id}";
-        $result = $this->db->select($query);
-        $data = $result->rows();
-        if (count($data) > 0 && $data[0]["revenue"] > 0) {
-            return $data[0]["revenue"];
-        } else {
-            return 0;
-        }
-    }
-
-    public function getTotalAvgRevenue()
-    {
-        $query = "SELECT AVG(revenue) as avg_revenue FROM (SELECT SUM(adsenseRevenue) as revenue FROM {$this->database}.{$this->table} WHERE site_id={$this->site_id} AND user_id={$this->user_id} GROUP BY toStartOfMonth(date) HAVING revenue > 0)";
-        $result = $this->db->select($query);
-        $data = $result->rows();
-        if (count($data) > 0 && $data[0]["avg_revenue"] > 0) {
-            return $data[0]["avg_revenue"];
-        } else {
-            return 0;
-        }
-    }
-
-    public function getUrlPageviews($url)
-    {
-        $query = "SELECT url, SUM(pageviews) as pageviews FROM {$this->database}.{$this->table} WHERE url='$url' AND site_id={$this->site_id} AND user_id={$this->user_id} GROUP BY url";
-        $result = $this->db->select($query);
-        $data = $result->rows();
-        if (count($data) > 0 && $data[0]["pageviews"] > 0) {
-            return $data[0]["pageviews"];
-        } else {
-            return 0;
-        }
-    }
-
-    public function getAvgPageviews($url)
-    {
-        $query = "SELECT AVG(pageviews) as avg_pageviews FROM (SELECT SUM(pageviews) as pageviews FROM {$this->database}.{$this->table} WHERE url='$url' AND site_id={$this->site_id} AND user_id={$this->user_id} GROUP BY toStartOfMonth(date) HAVING pageviews > 0)";
-        $result = $this->db->select($query);
-        $data = $result->rows();
-        if (count($data) > 0 && $data[0]["avg_pageviews"] > 0) {
-            return $data[0]["avg_pageviews"];
-        } else {
-            return 0;
-        }
-    }
-
-    public function getTotalPageviews()
-    {
-        $query = "SELECT SUM(pageviews) as pageviews FROM {$this->database}.{$this->table} WHERE site_id={$this->site_id} AND user_id={$this->user_id}";
-        $result = $this->db->select($query);
-        $data = $result->rows();
-        if (count($data) > 0 && $data[0]["pageviews"] > 0) {
-            return $data[0]["pageviews"];
-        } else {
-            return 0;
-        }
-    }
-
-    public function getTotalAvgPageviews()
-    {
-        $query = "SELECT AVG(pageviews) as avg_pageviews FROM (SELECT SUM(pageviews) as pageviews FROM {$this->database}.{$this->table} WHERE site_id={$this->site_id} AND user_id={$this->user_id} GROUP BY toStartOfMonth(date) HAVING pageviews > 0)";
-        $result = $this->db->select($query);
-        $data = $result->rows();
-        if (count($data) > 0 && $data[0]["pageviews"] > 0) {
-            return $data[0]["pageviews"];
-        } else {
-            return 0;
-        }
-    }
-
     public function getChangesData($field, $firstPeriod, $secondPeriod)
     {
-        $query = "SELECT url, sumIf($field, date > '{$firstPeriod["startDate"]}' and date < '{$firstPeriod["endDate"]}') as data, sumIf($field, date > '{$secondPeriod["startDate"]}' and date < '{$secondPeriod["endDate"]}') as previous_data, minus(previous_data, data) as result FROM {$this->database}.{$this->table} WHERE user_id={$this->user_id} AND site_id={$this->site_id} GROUP BY url ORDER BY data DESC";
-        $result = $this->db->select($query);
-        $data = $result->rows();
-        return $data;
+        $params = array(
+            "database" => $this->database,
+            "table" => $this->table,
+            "site_id" => $this->site_id,
+            "field" => $field,
+            "first_period_start_date" => $firstPeriod["startDate"],
+            "first_period_end_date" => $firstPeriod["endDate"],
+            "second_period_start_date" => $secondPeriod["startDate"],
+            "second_period_end_date" => $secondPeriod["endDate"],
+        );
+
+        $query = "SELECT url, sumIf({field}, date > '{first_period_start_date}' and date < '{first_period_end_date}') as data, sumIf({field}, date > '{second_period_start_date}' and date < '{second_period_end_date}') as previous_data, minus(previous_data, data) as result FROM {database}.{table} WHERE site_id={site_id} GROUP BY url ORDER BY data DESC";
+        $result = $this->db->select($query, $params);
+        return $result->rows();
     }
 
     protected function createTablesIfNotExist()
     {
         //        $this->db->write("DROP TABLE IF EXISTS {$this->database}.{$this->table}");
+        $params = array(
+            "table" => $this->table,
+            "database" => $this->database,
+        );
         $this->db->write("
-            CREATE TABLE IF NOT EXISTS {$this->database}.{$this->table} (
+            CREATE TABLE IF NOT EXISTS {database}.{table} (
                 id UInt64,
                 date Date,
-                user_id Int32,
                 site_id Int32,
                 url String,
                 domain String,
@@ -180,6 +116,6 @@ class ClickHouseViews extends ClickHouse
             )
             ENGINE = MergeTree()
             ORDER BY date
-        ");
+        ", $params);
     }
 }

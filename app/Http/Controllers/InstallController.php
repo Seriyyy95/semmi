@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\User;
-use Hash;
+use Illuminate\Support\Facades\Hash;
 
 class InstallController extends Controller
 {
@@ -33,9 +33,9 @@ class InstallController extends Controller
         }
 
         $user = new User();
-        $user->name = $request->user_login;
-        $user->email = $request->user_email;
-        $user->password = Hash::make($request->user_password);
+        $user->name = $request->get('user_login');
+        $user->email = $request->get('user_email');
+        $user->password = Hash::make($request->get('user_password'));
         $user->save();
         return redirect("home");
     }

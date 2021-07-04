@@ -47,6 +47,7 @@
                     <th>Домен</th>
                     <th>Доступно данных</th>
                     <th>Загружено или запланировано</th>
+                    <th>Автозагрузка</th>
                     <th style="width: 250px">Действия</th>
                 </tr>
             </thead>
@@ -57,6 +58,11 @@
                     <td>{{$site->domain}}</td>
                     <td>{{$site->start_date}} - {{$site->end_date}}</td>
                     <td>{{$site->first_date}} - {{$site->last_date}}</td>
+                    <td>
+                        <label class="checkbox">
+                            <input type="checkbox" class="autoload-checkbox" autocomplete="off" data-site-id="{{$site->id}}" @if($site->autoload) checked @endif>
+                        </label>
+                    </td>
                     <td>
                         @if($site->hasActiveTasks())
                         <div class="row">
@@ -93,7 +99,7 @@
         async function updateParsent(){
             $('.gsc-site-progress').each(await async function(index, element){
                 let site_id =  $(element).data('site-id');
-                let response = await fetch('/gaaccounts/' + site_id + '/status');
+                let response = await fetch('/api/gaaccounts/' + site_id + '/status?api_token={{$api_token}}');
                 let data = await response.json();
                 //console.log(data);
                 $(element).css({width: data.parsent + '%'});
@@ -111,11 +117,11 @@
             if(loadNextDates.count === "undefined"){
                 loadNextDates.count = 0;
             }
-            let response = await fetch("/gaaccounts/"+site_id+"/load?last_task_id="+loadNextDates.taskId);
+            let response = await fetch("/api/gaaccounts/"+site_id+"/load?api_token={{$api_token}}&last_task_id="+loadNextDates.taskId);
             let data = await response.json();
             loadNextDates.count += data["count"]
             loadNextDates.taskId = data["last_task_id"]
-            if(data["count"] == 0){
+            if(data["count"] === 0){
                 return false;
             } else{
                 return true;
@@ -132,7 +138,7 @@
             $(this).append(spinner);
             var loader = async function(){
                 let result = await loadNextDates(site_id);
-                if(result == false){
+                if(result === false){
                     window.location.reload();
                 }else{
                     setTimeout(loader, 200)
@@ -143,12 +149,23 @@
     </script>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function(){
+    document.addEventListener('DOMContentLoaded', function(){
         $('#request-details').on('show.bs.modal', function (e) {
             var button = $(e.relatedTarget);
             var modal = $(this);
             modal.find('.modal-body').load(button.data("remote"));
         });
+        $('.autoload-checkbox').on('change', async function (e) {
+            var site_id = $(this).data('site-id');
+            var state = "disabled";
+            if($(this).is(":checked")){
+                state = "enabled";
+            }
+            let response = await fetch("/api/gaaccounts/"+site_id+"/autoload/" + state + "?api_token={{$api_token}}");
+            let data = await response.json();
+        });
+
+
     });
     </script>
 

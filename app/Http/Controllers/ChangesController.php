@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use App\GoogleGscSite;
-use App\GoogleAnalyticsSite;
+use App\Models\GoogleGscSite;
+use App\Models\GoogleAnalyticsSite;
 use App\ClickHousePositions;
 use App\ClickHouseViews;
 use DateTime;
@@ -24,12 +24,10 @@ class ChangesController extends Controller
             'second_period' => 'regex:/\d{4}\-\d{2}\-\d{2} \- \d{4}\-\d{2}\-\d{2}/',
         ]);
 
-        $user = Auth::user();
         $site_id = $request->session()->get("ga_site_id", 1);
-        $sites = GoogleAnalyticsSite::where("user_id", $user->id)->get();
+        $sites = GoogleAnalyticsSite::all();
 
         $clickHouse = ClickHouseViews::getInstance();
-        $clickHouse->setUser($user->id);
         $clickHouse->setSite($site_id);
         $minDate = $clickHouse->getMinDate();
         $maxDate = $clickHouse->getMaxDate();
@@ -110,7 +108,6 @@ class ChangesController extends Controller
         $url = $request->get("url");
 
         $clickHouse = ClickHousePositions::getInstance();
-        $clickHouse->setUser($user->id);
         $clickHouse->setSite($site_id);
         $minDate = $clickHouse->getMinDate();
         $maxDate = $clickHouse->getMaxDate();
